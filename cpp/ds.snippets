@@ -1,0 +1,168 @@
+snippet SumPoint "range sum, point modification"
+template<class T>
+struct FenwickTree {
+	vector<T> bit;  // binary indexed tree
+	int n;
+
+	FenwickTree(int N) {
+		this->n = N;
+		bit.assign(N, T(0));
+	}
+
+	FenwickTree(vector<T> a) : FenwickTree(a.size()) {
+		for (size_t i = 0; i < a.size(); i++)
+			add(i, a[i]);
+	}
+
+	T sum(T r) {
+		T ret(0);
+		for (; r >= 0; r = (r & (r + 1)) - 1)
+			ret += bit[r];
+		return ret;
+	}
+
+	T sum(int l, int r) {
+		return sum(r) - sum(l - 1);
+	}
+
+	void add(int idx, T delta) {
+		for (; idx < n; idx = idx | (idx + 1))
+			bit[idx] += delta;
+	}
+};
+endsnippet
+
+snippet LazyAddMax "range add, range max"
+struct LazyAddMax
+{
+	vector<ll> seg;
+	vector<ll> updates;
+	int nb_elem;
+	ll UNDEF = -1e18;
+	int p, deb;
+
+	LazyAddMax() {}
+
+	LazyAddMax(const vector<ll> &arr)
+	{
+		p=0;
+		while ((1<<p) < SZ(arr)) ++p;
+		deb = (1<<p)-1;
+		nb_elem = (1<<p);
+		seg.resize(4*nb_elem);
+		updates.resize(4*nb_elem);
+		for (int i(0); i < SZ(seg); ++i)
+			seg[i] = UNDEF;	
+		for (int i(0); i < SZ(arr); ++i)
+			seg[deb + i] = arr[i];
+		for (int i(deb-1); i >= 0; --i)
+			seg[i] = max(seg[2*i+1], seg[2*i+2]);
+	}
+
+	void push(int node)
+	{
+		seg[node] += updates[node];
+		if (2*node +1 < SZ(updates))
+			updates[2*node+1] += updates[node];
+		if (2*node + 2 < SZ(updates))
+			updates[2*node+2] += updates[node];
+		updates[node] = 0;
+	}
+
+	void __add(int node, int l, int r, int lo, int up, ll delta)
+	{
+		if (l > r) return ;
+		push(node);
+		if (l > up or r < lo)
+			return ;
+		if (lo <= l and up >= r)
+		{
+			updates[node] += delta;
+			push(node);
+			return ;
+		}
+		int mid = (l+r)/2;
+		__add(2*node + 1, l, mid, lo,up, delta);
+		__add(2*node+2, mid+1, r, lo,up,delta);
+		seg[node] = max(seg[2*node+1], seg[2*node+2]);
+		assert(!updates[node]);
+	}
+
+	void add(int lo, int up, ll delta)
+	{
+		__add(0,0, nb_elem-1, lo,up, delta);
+	}
+
+	ll __query(int node, int l, int r, int lo, int up)
+	{
+		push(node);
+		if (l > up or r < lo)
+			return UNDEF;
+		if (l >= lo and r <= up)
+			return seg[node];
+		return max(__query(2*node+1, l, (l+r)/2, lo, up), __query(2*node+2, (l+r)/2+1, r, lo,up));
+	}
+
+	ll query(int lo, int up)
+	{
+		return __query(0, 0, nb_elem-1, lo,up);
+	}
+};
+endsnippet
+
+snippet MaxPoint "range max, point update"
+struct rangeMax
+{
+	vector<ll> seg;
+	int p, deb;
+
+	rangeMax(int N)
+	{
+		while ((1<<p) < N) ++p;
+		seg.resize((1<<(1+p)));
+		deb = (1<<p)-1;
+	}
+
+	void update(int id, ll val)
+	{
+		id += deb;
+		seg[id] = val;
+		while (id)
+		{
+			id = (id-1)/2;
+			seg[id] = max(seg[2*id+1], seg[2*id+2]);
+		}
+	}
+
+	ll query(int l, int r)
+	{
+		ll ret(0);
+		l += deb;
+		r += deb;
+		while (l < r)
+		{
+			if (l%2==0)
+				ret = max(ret, seg[l]);
+			if (r%2)
+				ret = max(ret, seg[r]);
+			l /= 2;
+			r = (r-2)/2;
+		}
+		if (l == r)
+			ret = max(ret, seg[r]);
+		return ret;
+	}
+};
+endsnippet
+
+snippet BuildSeg "Basic build of segment tree"
+void buildTree(int node, int l, int r)
+{
+	li[node] = l, ri[node] = r;
+
+	if (l == r)
+		return ;
+	buildTree(2*node+1, l, (l+r)/2);
+	buildTree(2*node+2, (l+r)/2+1, r);
+}
+endsnippet

@@ -1,0 +1,106 @@
+snippet SuffixArray "Suffix Array function"
+pair<vector<int>, vector<int>> suffix_array(string s)
+{
+	s += '\0';
+	int q(0);
+	while ((1<<q) < SZ(s))
+		++q;
+	int len(SZ(s));
+
+	const int MAXN = 256;
+	vector<int> count(MAXN);
+	vector<int> countBis;
+	for (auto c : s)
+		count[c]++;
+	for (int i(1); i < MAXN; ++i)
+		count[i] += count[i-1];
+	vector<int> order(len);
+	vector<int> tempOrder(len);
+	for (int i(0); i < len; ++i)
+		order[--count[s[i]]] = i;
+	int cntClass(1);
+	vector<int> comp(len);
+	comp[order[0]] = 0;
+	for (int i(1); i < len; ++i)
+	{
+		if (s[order[i]] != s[order[i-1]])
+			++cntClass;
+		comp[order[i]] = cntClass-1;
+	}
+	vector<pair<int, int>> ids(len);
+	for (int p(1); p <= q; ++p)
+	{
+		int delta(1<<(p-1));
+		for (int i(0); i < len; ++i)
+		{
+			int ii = (i + delta)%len;
+			ids[i] = make_pair(comp[i], comp[ii]);
+		}
+		count.assign(cntClass, 0);
+		countBis.assign(cntClass, 0);
+		for (int i(0); i < len; ++i)
+			count[ids[i].second]++;
+		for (int i(1); i < cntClass; ++i)
+			count[i] += count[i-1];
+		for (int i(0); i < len; ++i)
+			order[--count[ids[i].second]] = i;
+		for (int i(0); i < len; ++i)
+			countBis[ids[i].first]++;
+		for (int i(1); i < cntClass; ++i)
+			countBis[i]+=countBis[i-1];
+		for (int i(len-1); i >= 0; --i)
+			tempOrder[--countBis[ids[order[i]].first]] = order[i];
+		for (int i(0); i < len; ++i)
+			order[i] = tempOrder[i];
+		cntClass=1;
+		comp[order[0]] = 0;
+		for (int i(1); i < len; ++i)
+		{
+			if (ids[order[i]] != ids[order[i-1]])
+				cntClass++;
+			comp[order[i]] = cntClass-1;
+		}
+	}
+	return make_pair(comp, order);
+}
+endsnippet
+
+snippet LCParray "Build lcp array"
+vector<int> build_lcp_array(string s)
+{
+	auto [comp, order] = suffix_array(s);
+	s+='\0';
+	int len = SZ(s);
+	vector<int> lcp(len-1);
+	int k(0);
+	for (int i(0); i < len-1; ++i)
+	{
+		int j = order[comp[i]-1];
+		while (s[i+k] == s[j+k]) ++k;
+		lcp[comp[i]-1] = k;
+		k = max(0, k-1);
+	}
+	return lcp;
+}
+endsnippet
+
+snippet Zfunction "builds z function"
+vector<int> zFunction(const string &s)
+{
+	int len = SZ(s);
+
+	vector<int> z(len);
+	z[0] = len;
+	int r(0), pos(0);
+	for (int i(1); i < len;  ++i)
+	{
+		if (i < r)
+			z[i] = min(z[i-pos], r-i);
+		while (i + z[i] < len and s[i+z[i]] == s[z[i]])
+			++z[i];
+		if (i + z[i] > r)
+			r = i+z[i], pos = i;
+	}
+	return z;
+}
+endsnippet
