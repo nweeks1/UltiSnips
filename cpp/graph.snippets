@@ -1,0 +1,576 @@
+snippet unionFind "unionfind"
+struct UnionFind
+{
+	vector<int> id;
+	
+	UnionFind() {}
+	UnionFind(int N)
+	{
+		id.assign(N, -1);
+	}
+
+	int find(int u)
+	{
+		if (id[u] < 0) return u;
+		return id[u] = find(id[u]);
+	}
+
+	bool merge(int u, int v)
+	{
+		u = find(u), v = find(v);
+		if (u == v) return false;
+		if (id[u] > id[v]) swap(u, v);
+		id[u] += id[v];
+		id[v] = u;
+		return true;
+	}
+
+	vector<vector<int>> getComps()
+	{
+		vector<vector<int>> ret;
+		vector<vector<int>> comps(SZ(id));
+		for (int i(0); i < SZ(id); ++i)
+			comps[find(i)].push_back(i);
+		for (auto v : comps)
+			if (SZ(v))
+				ret.push_back(v);
+		return ret;
+	}
+};
+endsnippet
+
+snippet RollbackDSU
+struct DsuRollBack
+{
+	vector<int> id;
+	vector<pair<int, int>> stk;
+	DsuRollBack(int n) : id(n, -1) {}
+
+	int size(int x) { return -id[find(x)]; }
+	int find(int x) { return id[x] < 0 ? x : find(id[x]); }
+	int time() {return SZ(stk);}
+	void rollback(int t)
+	{
+		for (int i(time()); i-- > t;)
+			id[stk[i].first] = stk[i].second;
+		stk.resize(t);
+	}
+
+	bool join(int a, int b)
+	{
+		a = find(a), b = find(b);
+		if (a == b) return false;
+		if (id[a] > id[b]) swap(a, b);
+		stk.emplace_back(a, id[a]);
+		stk.emplace_back(b, id[b]);
+		id[a] += id[b];
+		id[b] = a;
+		return true;
+	}
+};
+endsnippet
+
+snippet BFS
+vector<int> bfs(int source, const vector<vector<int>> &g)
+{
+	vector<int> dis(nbSommets, 1e9);
+	dis[source] = 0;
+	queue<int> q;
+	q.push(source);
+	while (SZ(q))
+	{
+		int u = q.front();
+		q.pop();
+		for (auto v : g[u])
+			if (dis[v] == 1e9)
+			{
+				dis[v] = 1 + dis[u];
+				q.push(v);
+			}
+	}
+	return dis;
+}
+endsnippet
+
+snippet SCC
+vector<vector<int>> calcSCC(const vector<vector<int>> &g)
+{
+	vector<vector<int>> rg(SZ(g));
+	for (int u(0); u < SZ(g); ++u)
+		for (auto v : g[u])
+			rg[v].push_back(u);
+	vector<bool> seen(SZ(g));
+	const auto dfs = [&](int u, const vector<vector<int>> &g, vector<int> &order)
+	{
+		auto aux = [&](int u, auto& aux_ref) mutable
+		{
+			if (seen[u]) return;
+			seen[u] = true;
+			for (auto v : g[u])
+				aux_ref(v, aux_ref);
+			order.push_back(u);
+		};
+		aux(u, aux);
+	};
+	vector<int> order;
+	for (int u(0); u < SZ(g); ++u)
+		dfs(u, g, order);
+	reverse(order.begin(), order.end());
+	vector<vector<int>> scc;
+	seen.assign(SZ(g), false);
+	for (auto u : order)
+		if (!seen[u])
+		{
+			vector<int> comp;
+			dfs(u, rg, comp);
+			scc.push_back(comp);
+		}
+	return scc;
+}
+endsnippet
+
+snippet Dijkstra
+auto dijsktra(int source, const vector<vector<Edge>> &g)
+{
+	vector<ll> dis(SZ(g), 1e18);
+	vector<ll> par(SZ(g), -1);
+	
+	dis[source] = 0;
+	using pli = pair<ll, int>;
+	priority_queue<pli, vector<pli>, greater<pli>> pq;
+	pq.push({0, source});
+	while (!pq.empty())
+	{
+		auto [d, u] = pq.top(); pq.pop();
+		if (d > dis[u]) continue;
+		for (auto [v, c, id] : g[u])
+			if (d + c < dis[v])
+			{
+				dis[v] = d + c;
+				par[v] = u;
+				pq.push({dis[v], v});
+			}
+	}
+	return make_pair(dis, par);
+}
+endsnippet
+
+snippet Kshortest
+struct Edge
+{
+	ll to, cost, id;
+};
+
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+int randint(int lb, int ub){ return uniform_int_distribution<int>(lb, ub)(rng); }
+
+using T = pair<ll, ll>; // To change
+struct Node 
+{
+	Node *ch[2];
+	T val;
+	
+	Node(T v) { ch[0] = ch[1] = nullptr; val = v;}
+	Node() {ch[0] = ch[1] = nullptr;}
+	Node *copy()
+	{
+		Node *ret = new Node(val);
+		ret->ch[0] = ch[0], ret->ch[1] = ch[1];
+		return ret;
+	}
+};
+
+Node *merge(Node *lft, Node *rgt)
+{
+	if (!lft) return rgt;
+	if (!rgt) return lft;
+	if (lft->val > rgt->val) swap(lft, rgt);
+	int side = randint(0, 1);
+	if (lft->ch[side]) lft->ch[side] = lft->ch[side]->copy();
+	lft->ch[side] = merge(lft->ch[side], rgt);
+	return lft;
+}
+
+vector<ll> dis, par, parEdge;
+vector<int> order;
+
+void dijsktra(int source, const vector<vector<Edge>> &g)
+{
+	dis.assign(SZ(g), 1e18);
+	par.assign(SZ(g), -1);
+	parEdge.assign(SZ(g), -1);
+
+	dis[source] = 0;
+	using pli = pair<ll, int>;
+	priority_queue<pli, vector<pli>, greater<pli>> pq;
+	pq.push({0, source});
+	while (!pq.empty())
+	{
+		auto [d, u] = pq.top(); pq.pop();
+		if (d > dis[u]) continue;
+		order.push_back(u);
+		for (auto [v, c, id] : g[u])
+			if (d + c < dis[v])
+			{
+				dis[v] = d + c;
+				par[v] = u;
+				parEdge[v] = id;
+				pq.push({dis[v], v});
+			}
+	}
+}
+
+vector<ll> kShortestPaths(int s, int t, int K, const vector<vector<Edge>> &g)
+{
+	int nbSommets(SZ(g));
+	vector<vector<Edge>> rg(nbSommets);
+	for (int u(0); u < nbSommets; ++u)
+		for (auto [v, c, id]: g[u])
+			rg[v].push_back({u, c, id});
+
+	dijsktra(t, rg);
+	vector<ll> ret;
+	if (dis[s] == 1e18)
+	{
+		ret.assign(K, -1);
+		return ret;
+	}
+	vector<Node *> heap(nbSommets, nullptr);
+	for (auto u : order)
+	{
+		if (par[u] != -1 and heap[par[u]])
+			heap[u] = heap[par[u]]->copy();
+		for (auto [v, w, id] : g[u])
+			//if (v != par[u])
+			if (id != parEdge[u])
+			{
+				ll delta = w + dis[v] - dis[u];
+				if (delta < 1e18)
+					heap[u] = merge(heap[u], new Node(make_pair(delta, v)));
+			}
+	}
+	using T = pair<ll, Node*>;
+	priority_queue<T, vector<T>, greater<T>> pq;
+	ret.push_back(0);
+	if (heap[s]) pq.emplace(heap[s]->val.first, heap[s]);
+	while (SZ(pq) and SZ(ret) < K)
+	{
+		auto [dis, cur] = pq.top(); pq.pop();
+		ret.push_back(dis);
+		for (auto ch : cur->ch)
+			if (ch)
+				pq.emplace(dis + ch->val.first - cur->val.first, ch);
+		int v = cur->val.second;
+		if (heap[v])
+			pq.emplace(dis + heap[v]->val.first, heap[v]);
+	}
+	for (auto &v : ret) v += dis[s];
+	while (SZ(ret) < K) ret.push_back(-1);
+	return ret;
+}
+endsnippet
+
+snippet Bridge
+vector<pair<int, int>> bridges(const vector<vector<Edge>> &g)
+{
+	int nbSommets(SZ(g));
+	vector<int> lo(nbSommets, nbSommets), depth(nbSommets), par(nbSommets,-1);
+	vector<bool> seen(nbSommets);
+	vector<pair<int, int>> bridge;
+	
+	auto dfs = y_combinator([&](auto dfs, int u) -> void
+			{
+				seen[u] = true;
+				lo[u] = depth[u];
+				for (auto [v, id] : g[u])
+					if (id != par[u])
+					{
+						if (!seen[v])
+						{
+							depth[v] = depth[u] + 1;
+							par[v] = id;
+							dfs(v);
+							if (lo[v] > depth[u])
+								bridge.emplace_back(u, v);
+						}
+						lo[u] = min(lo[u], lo[v]);
+					}
+			});
+	for (int u(0); u < nbSommets; ++u)
+		if (!seen[u])
+			dfs(u);
+	return bridge;
+}
+endsnippet
+
+snippet TwoEdge
+vector<vector<int>> two_edge_components(const vector<vector<Edge>> &g)
+{
+	int nbSommets(SZ(g));
+	auto bridge = bridges(g);
+	set<pair<int, int>> blocked;
+	for (auto [u, v] : bridge)
+		blocked.insert({{u,v}, {v, u}});
+	vector<bool> seen(nbSommets);
+	auto dfs = y_combinator([&](auto dfs, int u, vector<int> &comp) -> void
+			{
+				if (seen[u]) return;
+				seen[u] = true;
+				comp.push_back(u);
+				for (auto [v,_] : g[u])
+					if (!blocked.count({u, v}))
+						dfs(v, comp);
+			});
+	vector<vector<int>> comps;
+	for (int u(0); u < nbSommets; ++u)
+		if (!seen[u])
+		{
+			vector<int> comp;
+			dfs(u, comp);
+			comps.push_back(comp);
+		}
+	return comps;
+}
+endsnippet
+
+snippet ThreeEdge
+vector<vector<int>> three_edge_comps(const vector<vector<int>> &g)
+{
+	int nbSommets(SZ(g));
+	UnionFind uf(nbSommets);
+
+
+	vector<int> in(nbSommets), out(nbSommets), low(nbSommets, nbSommets), deg(nbSommets, 0),
+		path(nbSommets, nbSommets);
+	vector<bool> seen(nbSommets);
+
+	const auto absorb = [&](int u, int v) -> void
+	{
+		uf.merge(u, v);
+		deg[u] += deg[v];
+	};
+
+	int t(0);
+	auto dfs = y_combinator([&](auto dfs, const int u, int p) -> void
+			{
+				seen[u] = true;
+				in[u] = t++;
+				for (int v : g[u])
+				{
+					if (u == v) continue;
+					if (v == p)
+					{
+						p = nbSommets;
+						continue;
+					}
+					if (seen[v])
+					{
+						if (in[v] < in[u])
+						{
+							deg[u]++;
+							low[u] = min(low[u], in[v]);
+						}
+						else
+						{
+							deg[u]--;
+							int w = path[u];
+							while (w != nbSommets and in[w] <= in[v] and in[v] < out[w])
+							{
+								absorb(u, w);
+								w = path[w];
+							}
+							path[u] = w;
+						}
+						continue;
+					}
+					dfs(v, u);
+					if (path[v] == nbSommets and deg[v] <= 1)
+					{
+						deg[u] += deg[v];
+						low[u] = min(low[u], low[v]);
+						continue;
+					}
+					else if (deg[v] == 0)
+						v = path[v];
+					if (low[v] < low[u])
+					{
+						low[u] = low[v];
+						swap(path[u], v);
+					}
+					while (v != nbSommets)
+					{
+						absorb(u, v);
+						v = path[v];
+					}
+				}
+				out[u] = t;
+			});
+	for (int i(0); i < nbSommets; ++i)
+		if (!seen[i])
+			dfs(i, nbSommets);
+
+	return uf.getComps();
+}
+endsnippet
+
+snippet GeneralMatching
+vector<pair<int, int>> generalMatching(int N, vector<pair<int,int>> &ed)
+{
+	vector<vector<Mint>> mat(N, vector<Mint>(N)), A;
+	for (auto [a, b] : ed)
+	{
+		Mint r = randint(0, MOD-1);
+		mat[a][b] = r, mat[b][a] = -r;
+	}
+	A = mat;
+	int r = matInv(A);
+	int M = 2 * N - r, fi, fj;
+	assert(r%2 == 0);
+
+	if (M != N) do {
+		mat.resize(M, vector<Mint>(M));
+		for (int i(0);i < N; ++i)
+		{
+			mat[i].resize(M);
+			for (int j(N); j < M; ++j)
+			{
+				Mint r = randint(0, MOD-1);
+				mat[i][j] = r, mat[j][i] = -r;
+			}
+		}
+		A = mat;
+	} while (matInv(A) != M);
+
+	vector<int> has(M, 1); 
+	vector<pair<int, int>> ret;
+	for (int it(0); it < M/2; ++it)
+	{
+		for (int i(0); i < M; ++i) if (has[i])
+			for (int j(i+1); j < M; ++j)
+				if (A[i][j] != 0 and mat[i][j] != 0 and has[j])
+				{
+					fi = i, fj = j; goto done;
+				}
+		return ret;
+done:
+		if (fj < N) ret.emplace_back(fi, fj);
+		has[fi] = has[fj] = 0;
+		for (int sw(0); sw < 2; ++sw)
+		{
+			Mint a = A[fi][fj].inv();
+			for (int i(0); i < M; ++i)
+				if (has[i] and A[i][fj] != 0)
+				{
+					Mint b = A[i][fj] * a;
+					for (int j(0); j < M; ++j)
+						A[i][j] -= A[fi][j] * b;
+				}
+			swap(fi, fj);
+		}
+	}
+	return ret;
+}
+endsnippet
+
+snippet EulerWalk
+// Finds euler tour/walk starting at src
+vector<int> eulerWalk(const vector<vector<pair<int, int>>> &g, int nbAretes, int src=0)
+{
+	int nbSommets = SZ(g);
+	vector<int> D(nbSommets), its(nbSommets), eu(nbAretes), ret, s={src};
+	D[src]++;
+	while (SZ(s))
+	{
+		int x = s.back(), &it = its[x], end = SZ(g[x]);
+		if (it == end) {ret.push_back(x); s.pop_back(); continue; }
+		auto [y, e] = g[x][it++];
+		if (!eu[e])
+		{
+			D[x]--, D[y]++;
+			eu[e] = 1; s.push_back(y);
+		}
+	}
+	for (int x : D) if (x < 0 || SZ(ret) != nbAretes + 1) return {};
+	reverse(ret.begin(), ret.end());
+	return ret;
+}
+endsnippet
+
+snippet DirectedMST
+struct Edge
+{
+	int a, b; ll w;
+};
+
+struct Node
+{
+	Edge key;
+	Node *l, *r;
+	ll delta;
+	Node(Edge e) : key(e), l(nullptr), r(nullptr), delta(0) {}
+	void prop() {
+		key.w += delta;
+		if (l) l->delta += delta;
+		if (r) r->delta += delta;
+		delta = 0;
+	}
+	Edge top() {prop(); return key;}
+};
+
+Node *merge(Node *lft, Node *rgt)
+{
+	if (!lft or !rgt) return lft ? lft : rgt;
+	lft->prop(); rgt->prop();
+	if (lft->key.w > rgt->key.w) swap(lft, rgt);
+	swap(lft->l, (lft->r = merge(rgt, lft->r)));
+	return lft;
+}
+
+void pop(Node*& a) {a->prop(); a = merge(a->l, a->r);}
+
+pair<ll, vector<int>> directedMst(int n, int r, vector<Edge> &g)
+{
+	DsuRollBack uf(n);
+	vector<Node*> heap(n);
+	for (Edge e : g) 
+		heap[e.b] = merge(heap[e.b], new Node{e});
+	ll ret(0);
+	vector<int> seen(n, -1), path(n), par(n);
+	seen[r] = r;
+	vector<Edge> Q(n), in(n, {-1, -1, 0}), comp;
+	deque<tuple<int, int, vector<Edge>>> cycs;
+	for (int s(0); s < n; ++s)
+	{
+		int u = s, qi = 0, w;
+		while (seen[u] < 0)
+		{
+			if (!heap[u]) return {-1, {}};
+			Edge e = heap[u]->top();
+			heap[u]->delta -= e.w, pop(heap[u]);
+			Q[qi] = e, path[qi++] = u, seen[u] = s;
+			ret += e.w, u = uf.find(e.a);
+			if (seen[u] == s)
+			{
+				Node *cyc = nullptr;
+				int end = qi, time = uf.time();
+				do cyc = merge(cyc, heap[w=path[--qi]]);
+				while (uf.join(u, w));
+				u = uf.find(u), heap[u] = cyc, seen[u] = -1;
+				cycs.push_front({u, time, {&Q[qi], &Q[end]}});
+			}
+		}
+		for (int i(0); i < qi; ++i)
+			in[uf.find(Q[i].b)] = Q[i];
+	}
+
+	for (auto &[u, t, comp] : cycs)
+	{
+		uf.rollback(t);
+		Edge inEdge = in[u];
+		for (auto& e : comp) in[uf.find(e.b)] = e;
+		in[uf.find(inEdge.b)] = inEdge;
+	}
+	for (int i(0); i < n; ++i) par[i] = in[i].a;
+	return {ret, par};
+}
+endsnippet

@@ -1,0 +1,119 @@
+snippet Dinic "dinic algo"
+struct Edge
+{
+	ll to, f, c;
+};
+
+struct Graph
+{
+	vector<Edge> edges;
+	vector<vector<int>> G;
+	int s, t;
+	Graph(int n, int s, int t) : edges(), G(n), s(s), t(t) {}
+
+	void addEdge(int a, int b, ll c1, ll c2=0) // If not directed, take c2=c1
+	{
+		G[a].push_back(SZ(edges));
+		edges.push_back(Edge{b, 0, c1});
+		G[b].push_back(SZ(edges));
+		edges.push_back(Edge{a, 0, c2});
+	}
+};
+
+struct Dinic : public Graph
+{
+	vector<int> dis, ptr;
+	Dinic(int n, int s, int t) : Graph(n, s, t) {}
+
+	ll dfs(ll v, ll maxF)
+	{
+		if (!maxF or v == t) return maxF;
+		for (; ptr[v] < SZ(G[v]); ++ptr[v])
+		{
+			int k = G[v][ptr[v]];
+			Edge &ed = edges[k];
+			if (ed.c > ed.f and dis[ed.to] == dis[v] + 1)
+				if (ll df = dfs(ed.to, min(maxF, ed.c-ed.f)))
+				{
+					ed.f += df;
+					edges[k^1].f -= df;
+					return df;
+				}
+		}
+		return 0;
+	}
+
+	ll flow(void)
+	{
+		int N = SZ(G);
+		ll f(0);
+		while (1)
+		{
+			dis.assign(N, -1);
+			queue<int> q; q.push(s); dis[s] = 0;
+			while (!q.empty())
+			{
+				int u = q.front(); q.pop();
+				if (u == t) break;
+				for (auto k : G[u])
+				{
+					Edge ed = edges[k];
+					if (ed.c > ed.f and dis[ed.to] == -1)
+					{
+						dis[ed.to] = dis[u] + 1;
+						q.push(ed.to);
+					}
+				}
+			}
+			if (dis[t] == -1) break;
+			ptr.assign(N, 0);
+			while (ll df = dfs(s, (1LL<<62))) f += df;
+		}
+		return f;
+	}
+};
+endsnippet
+
+snippet Hungarian "hungarian algorithm for min cost bipartite matching"
+pair<ll, vector<int>> hungarian(const vector<vector<ll>> &cost)
+{
+	if (cost.empty()) return {0, {}};
+	int n = SZ(cost) + 1, m = SZ(cost[0]) + 1;
+	vector<ll> u(n), v(m);
+	vector<int> p(m), ans(n-1);
+	for (int i(1); i < n; ++i)
+	{
+		p[0] = i;
+		int j0 = 0;
+		vector<ll> dist(m, 1e18), pre(m, -1);
+		vector<bool> done(m+1);
+		do
+		{
+			done[j0] = true;
+			ll i0 = p[j0], j1, delta = 1e18;
+			for (int j(1); j < m; ++j) 
+				if (!done[j])
+				{
+					auto cur = cost[i0-1][j-1] - u[i0] - v[j];
+					if (cur < dist[j]) dist[j] = cur, pre[j] = j0;
+					if (dist[j] < delta) delta = dist[j], j1 = j;
+				}
+			for (int j(0); j < m; ++j)
+			{
+				if (done[j]) u[p[j]] += delta, v[j] -= delta;
+				else dist[j] -= delta;
+			}
+			j0 = j1;
+		} while (p[j0]);
+		while (j0)
+		{
+			int j1 = pre[j0];
+			p[j0] = p[j1], j0 = j1;
+		}
+	}
+	for (int j(1); j < m; ++j) 
+		if (p[j])
+			ans[p[j]-1] = j-1;
+	return {-v[0], ans};
+}
+endsnippet

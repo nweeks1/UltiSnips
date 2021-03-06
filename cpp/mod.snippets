@@ -1,12 +1,9 @@
 snippet modint "Modular integer class"
-const int MOD = 1e9 + 7;
-
 template<const int32_t MOD>
 struct ModInt {
 	long long x;
 	ModInt() : x(0) {}
 	ModInt(long long u) : x(u) { x %= MOD; if (x < 0) x += MOD;}
-	ModInt& operator = (const ModInt &m) { x = m.x; return *this; }
 	friend bool operator == (const ModInt& a, const ModInt& b) { return a.x == b.x; }
 	friend bool operator != (const ModInt& a, const ModInt& b) { return a.x != b.x; }
 	friend bool operator < (const ModInt& a, const ModInt& b) { return a.x < b.x; }
@@ -35,13 +32,18 @@ struct ModInt {
 		return res;
 	}
 
+	static constexpr int mod() {return MOD;}
+
 	ModInt fastpow(long long k) { return ModInt(fp(x, k)); }
-	ModInt inv() { return ModInt(fp(x, MOD-2)); }
+	ModInt inv() { assert(x); return ModInt(fp(x, MOD-2)); }
 	ModInt& operator /= (const ModInt& m) { return *this *= ModInt(m).inv(); }
 	friend ModInt operator / (const ModInt& a, const ModInt& b) { return ModInt(a) *= ModInt(b).inv(); }
 
 	friend ostream& operator << (ostream& out, const ModInt& a) { return out << a.x; }
+	friend istream& operator >> (istream& in, ModInt& a) {return in >> a.x;}
 };
 
+//const int MOD = 1e9 + 7;
+const int MOD = 998244353;
 using Mint = ModInt<MOD>;
 endsnippet

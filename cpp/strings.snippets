@@ -104,3 +104,211 @@ vector<int> zFunction(const string &s)
 	return z;
 }
 endsnippet
+
+snippet Hash
+using Mint1 = ModInt<int(1e9+7)>;
+using Mint2 = ModInt<int(1e9+9)>;
+using Mpair = pair<Mint1, Mint2>;
+const int BASE = 1665525;
+const int MAXLEN = 1e6;
+Mpair powers[MAXLEN];
+Mpair inverses[MAXLEN];
+
+void preCalc(void)
+{	
+	for (int i(0); i < MAXLEN; ++i)
+	{
+		if (!i)
+			powers[i] = inverses[i] = {1, 1};
+		else
+		{
+			powers[i] = make_pair(powers[i-1].first * BASE, powers[i-1].second * BASE);
+			inverses[i].first = powers[i].first.inv();
+			inverses[i].second = powers[i].second.inv();
+		}
+	}
+}
+endsnippet
+
+snippet Kmp
+vector<int> prefixFun(const string &s)
+{
+	int len = SZ(s);
+	vector<int> kmp(len);
+	for (int i(1); i < len; ++i)
+	{
+		int j = kmp[i-1];
+		while (j and s[i] != s[j])
+			j = kmp[j-1];
+		if (s[i] == s[j]) ++j;
+		kmp[i] = j;
+	}
+	return kmp;
+}
+endsnippet
+
+snippet SuffixTree
+template<class T>
+struct Node
+{
+	int l, r, par, link;
+	ll characterDepth=0, countLeaves=0;
+	ll subtreeSize=0;
+	bool isLeaf;
+	int minLeaf=1e9;
+	map<T, int> next;
+
+	Node (int l=0, int r = 0, int par = -1)
+		: l(l), r(r), par(par), link(-1) {}
+
+	int len(void) const {return r - l; }
+	int &get(T c)
+	{
+		if (!next.count(c)) next[c] = -1;
+		return next[c];
+	}
+};
+
+struct State
+{
+	int v, pos;
+	State (int v, int pos) : v(v), pos(pos) {}
+};
+template<class T>
+struct SuffixTree
+{
+	T endMarker;
+	vector<T> s;
+	vector<Node<T>> tree;
+	State ptr;
+	int sz = 0;
+
+	State trav(State curState, int l, int r)
+	{
+		while (l < r)
+		{
+			if (curState.pos == tree[curState.v].len())
+			{
+				curState = State(tree[curState.v].get(s[l]), 0);
+				if (curState.v == -1)
+					return curState;
+			}
+			else
+			{
+				if (s[tree[curState.v].l + curState.pos] != s[l])
+					return State(-1, -1);
+				if (r-l < tree[curState.v].len() - curState.pos)
+					return State(curState.v, curState.pos + r-l);
+				l += tree[curState.v].len() - curState.pos;
+				curState.pos = tree[curState.v].len();
+			}
+		}
+		return curState;
+	}
+
+	int split(State state)
+	{
+		if (state.pos == tree[state.v].len())
+			return state.v;
+		if (!state.pos)
+			return tree[state.v].par;
+		Node v = tree[state.v];
+		int id = sz++;
+		assert(SZ(tree) == id);
+		tree.emplace_back(v.l, v.l + state.pos, v.par);
+		tree[v.par].get(s[v.l]) = id;
+		tree[id].get(s[v.l + state.pos]) = state.v;
+		tree[state.v].par = id;
+		tree[state.v].l += state.pos;
+		return id;
+	}
+
+	int getLink(int v)
+	{
+		if (tree[v].link != -1) return tree[v].link;
+		if (tree[v].par == -1) return 0;
+		int to = getLink(tree[v].par);
+		return tree[v].link = split(trav(State(to, tree[to].len()),
+					tree[v].l + !tree[v].par, tree[v].r));
+	}
+
+	void extend(int pos)
+	{
+		while (1)
+		{
+			State nextPointer = trav(ptr, pos, pos+1);
+			if (nextPointer.v != -1)
+			{
+				ptr = nextPointer;
+				break;
+			}
+			int mid = split(ptr);
+			int leaf = sz++;
+			assert(SZ(tree) == leaf);
+			tree.emplace_back(pos, SZ(s), mid);
+			tree[mid].get(s[pos]) = leaf;
+			ptr.v = getLink(mid);
+			ptr.pos = tree[ptr.v].len();
+			if (!mid)
+				break;
+		}
+	}
+
+	void preprocess(int u)
+	{
+		tree[u].isLeaf = tree[u].r == SZ(s);
+		tree[u].countLeaves = tree[u].isLeaf;
+		tree[u].characterDepth += tree[u].len();
+		for (auto [c, v] : tree[u].next)
+			if (v != -1)
+			{
+				assert(!tree[u].isLeaf);
+				tree[v].characterDepth = tree[u].characterDepth;
+				preprocess(v);
+				tree[u].countLeaves += tree[v].countLeaves;
+			}
+	}
+
+	SuffixTree(const vector<T> &S, const T endMarker)
+		: endMarker(endMarker), s(S.begin(), S.end()), ptr(0, 0)
+	{
+		s.push_back(endMarker);
+		tree.emplace_back();
+		sz = 1;
+		for (int i(0); i < SZ(s); ++i)
+			extend(i);
+		preprocess(0);
+	}
+
+	State _traverse(State state, int l, const vector<T> &text)
+	{
+		if (state.v == -1 or l == SZ(text))
+			return state;
+		if (state.pos == tree[state.v].len())
+			return _traverse(State(tree[state.v].get(text[l]), 0), l, text);
+		if (s[ tree[state.v].l + state.pos ] != text[l])
+			return State(-1, -1);
+		state.pos++;
+		return _traverse(state, l+1, text);
+	}
+
+	State traverse(const vector<T> &text)
+	{
+		return _traverse(State(0, 0), 0, text);
+	}
+
+	vector<T> goUp(State u)
+	{
+		vector<T> ret;
+		if (u.v)
+		{
+			int p = tree[u.v].par;
+			ret = goUp(State(p, tree[p].len()));
+		}
+
+		for (int i(0); i < u.pos; ++i)
+			ret.push_back(s[i + tree[u.v].l]);
+		return ret;
+	}
+};
+endsnippet

@@ -1,0 +1,55 @@
+snippet TreeInit
+const int MAXP = 20;
+int nbSommets;
+vector<int> g[MAXN];
+int par[MAXP][MAXN];
+int tin[MAXN], tout[MAXN];
+int depth[MAXN];
+int t;
+
+void dfs(int u, int p)
+{
+	tin[u] = t++;
+	par[0][u] = p;
+	for (auto v : g[u])
+		if (v != p)
+		{
+			depth[v] = depth[u] + 1;
+			dfs(v, u);
+		}
+	tout[u] = t++;
+}
+
+void init()
+{
+	for (int p(1); p < MAXP; ++p)
+		for (int u(0); u < nbSommets; ++u)
+			par[p][u] = par[p-1][par[p-1][u]];
+}
+
+int lca(int u, int v)
+{
+	if (depth[u] < depth[v]) swap(u,v);
+	int diff = depth[u] - depth[v];
+	for (int p(0); p < MAXP; ++p)
+		if ((1<<p) & diff)
+			u = par[p][u];
+	for (int p(MAXP-1); p >= 0; --p)
+		if (par[p][u] != par[p][v])
+			u = par[p][u], v = par[p][v];
+	if (u != v)
+		u = par[0][u];
+	return u;
+}
+endsnippet
+
+snippet ReadTree
+for (int i(1); i < nbSommets; ++i)
+{
+	int u, v;
+	read(u, v);
+	--u, --v;
+	g[u].push_back(v);
+	g[v].push_back(u);
+}
+endsnippet

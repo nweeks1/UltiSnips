@@ -1,0 +1,135 @@
+snippet Sos
+// ret[i] = sum j subset i a[j]
+// Changing k or inv for mobius inversion
+// O(n2^n)
+template<class T>
+vector<T> mobiusTransform(int n, const vector<T> &a, int k = -1, bool inv = false)
+{
+	assert(SZ(a) == (1 << n));
+	vector<T> ret(SZ(a));
+	for (int i(0); i < SZ(a); ++i)
+		if (k == -1 or __builtin_popcount(i) == k)
+			ret[i] = a[i];
+	for (int i(0); i < n; ++i)
+		for (int j(0); j < SZ(a); ++j)
+			if (j & (1 << i))
+				ret[j] = ret[j] + (inv ? -1 : 1) * ret[j - (1 << i)];
+	return ret;
+}
+endsnippet
+
+snippet SubsetConv
+// ret[S] = sum X subset S a[X] b[S\X]
+// O(n^2 2^n)
+template<class T>
+vector<T> subsetConvolution(int n, const vector<T> &a, const vector<T> &b)
+{
+	vector<vector<T>> rankedA(n+1), rankedB(n+1);
+	for (int k(0); k <= n; ++k)
+	{
+		rankedA[k] = mobiusTransform(n, a, k);
+		rankedB[k] = mobiusTransform(n, b, k);
+	}
+	vector<vector<T>> conv(n+1, vector<T>(1 << n));
+	for (int k(0); k <= n; ++k)
+		for (int j(0); j <= k; ++j)
+			for (int i(0); i < (1 << n); ++i)
+				conv[k][i] += rankedA[j][i] * rankedB[k-j][i];
+	vector<vector<T>> invs(n+1);
+	for (int k(0); k <= n; ++k)
+		invs[k] = mobiusTransform(n, conv[k], -1, true);
+	vector<T> ret(1<<n);
+	for (int i(0); i < (1 << n); ++i)
+		ret[i] = invs[__builtin_popcount(i)][i];
+	return ret;
+}
+endsnippet
+
+snippet OrConv
+template<class T>
+void orFFT(vector<T> &a, bool inv=false)
+{
+	int n(SZ(a));
+	for (int step(1); step < n; step *= 2)
+		for (int i(0); i < n; i += 2 * step)
+			for (int j(i); j < i + step; ++j)
+			{
+				T &u = a[j], &v = a[j+step];
+				tie(u, v) = inv ? make_pair(v, u-v) : make_pair(u+v, u);
+			}
+}
+
+template<class T>
+void orConv(vector<T> a, vector<T> b)
+{
+	orFFT(a); orFFT(b);
+	for (int i(0); i < SZ(b); ++i)
+		a[i] *= b[i];
+	orFFT(a, true);
+	return a;
+}
+endsnippet
+
+snippet AndConv
+template<class T>
+void andFFT(vector<T> &a, bool inv=false)
+{
+	int n(SZ(a));
+	for (int step(1); step < n; step *= 2)
+		for (int i(0); i < n; i += 2 * step)
+			for (int j(i); j < i + step; ++j)
+			{
+				T &u = a[j], &v = a[j+step];
+				tie(u, v) = inv ? make_pair(v-u, u) : make_pair(v, u+v);
+			}
+}
+
+template<class T>
+vector<T> andConv(vector<T> a, vector<T> b)
+{
+	andFFT(a); andFFT(b);
+	for (int i(0); i < SZ(a); ++i)
+		a[i] *= b[i];
+	andFFT(a, true);
+	return a;
+}
+endsnippet
+
+snippet XorConv
+template<class T>
+void xorFFT(vector<T> &a, bool inv=false)
+{
+	int n(SZ(a));
+	for (int step(1); step < n; step *= 2)
+		for (int i(0); i < n; i += 2 * step)
+			for (int j(i); j < i + step; ++j)
+			{
+				T &u = a[j], &v = a[j+step];
+				tie(u, v) = make_pair(u+v, u-v);
+			}
+	if (inv)
+		for (T& x : a)
+			x /= SZ(a);
+}
+
+template<class T>
+vector<T> xorConv(vector<T> a, vector<T> b)
+{
+	xorFFT(a); xorFFT(b);
+	for (int i(0); i < SZ(b); ++i)
+		a[i] *= b[i];
+	xorFFT(a, true);
+	return a;
+}
+endsnippet
+
+snippet Popcount
+// From https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36041
+unsigned int popcount64(unsigned long long x)
+{
+	x = (x & 0x5555555555555555ULL) + ((x >> 1) & 0x5555555555555555ULL);
+	x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+	x = (x & 0x0F0F0F0F0F0F0F0FULL) + ((x >> 4) & 0x0F0F0F0F0F0F0F0FULL);
+	return (x * 0x0101010101010101ULL) >> 56;
+}
+endsnippet

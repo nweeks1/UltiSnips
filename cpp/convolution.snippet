@@ -1,0 +1,212 @@
+snippet Convolution
+template<class ModInt>
+void butterfly(vector<ModInt> &a)
+{
+	static int g = primitive_root(ModInt::mod());
+	int n = SZ(a);
+	int h(0);
+	while ((1 << h) < n) ++h;
+
+	static bool first = true;
+	static ModInt sum_e[30];
+	if (first)
+	{
+		first = false;
+		ModInt es[30], ies[30];
+		int cnt2 = __builtin_ctz(ModInt::mod() - 1);
+		ModInt e = ModInt(g).fastpow((ModInt::mod() - 1) >> cnt2), ie = e.inv();
+		for (int i = cnt2; i >= 2; i--) {
+			// e^(2^i) == 1
+			es[i - 2] = e;
+			ies[i - 2] = ie;
+			e *= e;
+			ie *= ie;
+		}
+		ModInt now = 1;
+		for (int i = 0; i <= cnt2 - 2; i++) {
+			sum_e[i] = es[i] * now;
+			now *= ies[i];
+		}
+	}
+	for (int ph = 1; ph <= h; ph++) {
+		int w = 1 << (ph - 1), p = 1 << (h - ph);
+		ModInt now = 1;
+		for (int s = 0; s < w; s++) {
+			int offset = s << (h - ph + 1);
+			for (int i = 0; i < p; i++) {
+				auto l = a[i + offset];
+				auto r = a[i + offset + p] * now;
+				a[i + offset] = l + r;
+				a[i + offset + p] = l - r;
+			}
+			now *= sum_e[__builtin_ctz(~(unsigned int)(s))];
+		}
+	}
+}
+
+template <class ModInt>
+void butterfly_inv(std::vector<ModInt>& a) {
+    static constexpr int g = primitive_root(ModInt::mod());
+    int n = int(a.size());
+    int h(0);
+    while ((1 << h) < n) ++h;
+
+    static bool first = true;
+    static ModInt sum_ie[30];  // sum_ie[i] = es[0] * ... * es[i - 1] * ies[i]
+    if (first) {
+        first = false;
+        ModInt es[30], ies[30];  // es[i]^(2^(2+i)) == 1
+        int cnt2 = __builtin_ctz(ModInt::mod() - 1);
+        ModInt e = ModInt(g).fastpow((ModInt::mod() - 1) >> cnt2), ie = e.inv();
+        for (int i = cnt2; i >= 2; i--) {
+            // e^(2^i) == 1
+            es[i - 2] = e;
+            ies[i - 2] = ie;
+            e *= e;
+            ie *= ie;
+        }
+        ModInt now = 1;
+        for (int i = 0; i <= cnt2 - 2; i++) {
+            sum_ie[i] = ies[i] * now;
+            now *= es[i];
+        }
+    }
+
+    for (int ph = h; ph >= 1; ph--) {
+        int w = 1 << (ph - 1), p = 1 << (h - ph);
+        ModInt inow = 1;
+        for (int s = 0; s < w; s++) {
+            int offset = s << (h - ph + 1);
+            for (int i = 0; i < p; i++) {
+                auto l = a[i + offset];
+                auto r = a[i + offset + p];
+                a[i + offset] = l + r;
+                a[i + offset + p] =
+                    (unsigned long long)(ModInt::mod() + l.x - r.x) *
+                    inow.x;
+            }
+            inow *= sum_ie[__builtin_ctz(~(unsigned int)(s))];
+        }
+    }
+}
+
+template <class ModInt>
+vector<ModInt> convolution_fft(vector<ModInt> a, vector<ModInt> b) {
+    int n = int(a.size()), m = int(b.size());
+    int z(1);
+    while (z < n + m-1) z *= 2;
+    a.resize(z);
+    butterfly(a);
+    b.resize(z);
+    butterfly(b);
+    for (int i = 0; i < z; i++)
+        a[i] *= b[i];
+    butterfly_inv(a);
+    a.resize(n + m - 1);
+    ModInt iz = ModInt(z).inv();
+    for (int i = 0; i < n + m - 1; i++) a[i] *= iz;
+    return move(a);
+}
+endsnippet
+
+snippet ConvDouble
+void fftDouble(vector<complex<double>> &a)
+{
+	using C = complex<double>;
+	int n = SZ(a), L = 31 - __builtin_clz(n);
+	static vector<complex<long double>> R(2, 1);
+	static vector<C> rt(2, 1);
+	for (static int k(2); k < n; k *= 2)
+	{
+		R.resize(n); rt.resize(n);
+		auto x = polar(1.0L, acos(-1.0L)/ k);
+		for (int i(k); i < 2*k; ++i)
+			rt[i] = R[i] = i&1 ? R[i/2] * x : R[i/2];
+	}
+	vector<int> rev(n);
+	for (int i(0); i < n; ++i)
+		rev[i] = (rev[i/2] | (i & 1) << L)/2;
+	for (int i(0); i < n; ++i)
+		if (i < rev[i])
+			swap(a[i], a[rev[i]]);
+	for (int k(1); k < n; k *= 2)
+		for (int i(0); i < n; i += 2 * k)
+			for (int j(0); j < k; ++j)
+			{
+				auto x = (double *)&rt[j+k], y = (double *)&a[i+j+k];
+				C z(x[0] * y[0] - x[1] * y[1], x[0] * y[1] + x[1]*y[0]);
+				a[i+j+k] = a[i+j] - z;
+				a[i+j] += z;
+			}
+}
+
+vector<double> conv(const vector<double> &a, const vector<double> &b)
+{
+	if (!SZ(a) or !SZ(b)) return {};
+	vector<double> ret(SZ(a) + SZ(b) + 1);
+	int L = 32 - __builtin_clz(SZ(ret)), n = 1 << L;
+	vector<complex<double>> in(n), out(n);
+	copy(a.begin(), a.end(), begin(in));
+	for (int i(0); i < SZ(b); ++i)
+		in[i].imag(b[i]);
+	fftDouble(in);
+	for (auto &x : in)
+		x *= x;
+	for (int i(0); i < n; ++i)
+		out[i] = in[-i & (n-1)] - conj(in[i]);
+	fftDouble(out);
+	for (int i(0); i < SZ(ret); ++i)
+		ret[i] = imag(out[i])/(4 * n);
+	return ret;
+}
+
+template<int M> vector<ll> convMod(const vector<ll> &a, const vector<ll> &b)
+{
+	using C = complex<double>;
+	if (!SZ(a) or !SZ(b)) return {};
+	vector<ll> ret(SZ(a) + SZ(b) - 1);
+	int B = 32 - __builtin_clz(SZ(ret)), n = 1 << B, cut = int(sqrt(M));
+	vector<C> L(n), R(n), outs(n), outl(n);
+	for (int i(0); i <SZ(a); ++i)
+		L[i] = C((int)a[i]/cut, (int)a[i]%cut);
+	for (int i(0); i < SZ(b); ++i)
+		R[i] = C((int)b[i]/cut, (int)b[i]%cut);
+	fftDouble(L), fftDouble(R);
+	for (int i(0); i < n; ++i)
+	{
+		int j = -i & (n-1);
+		outl[j] = (L[i] + conj(L[j]) ) * R[i] / (2. * n);
+		outs[j] = (L[i] - conj(L[j])) * R[i] / (2. * n) / 1i;
+	}
+	fftDouble(outl), fftDouble(outs);
+	for (int i(0); i < SZ(ret); ++i)
+	{
+		ll av = ll(real(outl[i])+.5), cv = ll(imag(outs[i])+.5);
+		ll bv = ll(imag(outl[i])+.5) + ll(real(outs[i])+.5);
+		ret[i] = ((av%M*cut + bv) % M * cut + cv) % M;
+	}
+	return ret;
+}
+endsnippet
+
+snippet InvFormal
+template<class ModInt>
+vector<ModInt> inverse(vector<ModInt> &a)
+{
+	int n = SZ(a);
+	assert(n and a[0] != 0);
+	vector<ModInt> b(1, ModInt(1)/a[0]);
+	int curSize(1);
+	while (curSize < n)
+	{
+		curSize = min(curSize * 2, n);
+		auto c = convolution_fft(a, b);
+		c.resize(curSize);
+		for (auto &v : c) v *= -1;
+		c[0] += 2;
+		b = convolution_fft(b, c);
+		b.resize(curSize);
+	}
+	return b;
+}
+endsnippet

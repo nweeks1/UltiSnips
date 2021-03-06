@@ -1,9 +1,43 @@
 snippet tempsimple "Template for single test programs"
 #include <bits/stdc++.h>
+#define SZ(v) ((int)(v).size())
 using namespace std;
 
-#define SZ(v) ((int)(v).size())
 using ll = long long;
+
+template<typename... Args>
+void read(Args&... args)
+{
+	((cin >> args), ...);
+}
+template<typename T>
+void read(vector<T> &vec)
+{
+	for (auto &v : vec) read(v);
+}
+
+void write() {}
+template<typename H, typename... T>
+void write(const H &h, const T&... t)
+{
+	cout << h;
+	if (sizeof...(t)) {cout << ' '; write(t...);}
+}
+
+template<typename T>
+void write(const vector<T> &vec)
+{
+	if (SZ(vec) == 0) return;
+	write(vec[0]);
+	for (int i(1); i < SZ(vec); ++i)
+	{cout << ' '; write(vec[i]);}
+}
+
+template<typename... Args>
+void writeln(Args... args)
+{
+	write(args...); cout << '\n';
+}
 
 int main(void)
 {
@@ -12,31 +46,59 @@ int main(void)
 }
 endsnippet
 
-snippet tempmulti "Template for multi test programs"
+snippet tempmulti
 #include <bits/stdc++.h>
+#define SZ(v) ((int)(v).size())
 using namespace std;
 
-#define SZ(v) ((int)(v).size())
 using ll = long long;
 
-ll solve(void);
+template<typename... Args>
+void read(Args&... args)
+{
+	((cin >> args), ...);
+}
+template<typename T>
+void read(vector<T> &vec)
+{
+	for (auto &v : vec) read(v);
+}
+
+void write() {}
+template<typename H, typename... T>
+void write(const H &h, const T&... t)
+{
+	cout << h;
+	if (sizeof...(t)) {cout << ' '; write(t...);}
+}
+
+template<typename T>
+void write(const vector<T> &vec)
+{
+	if (SZ(vec) == 0) return;
+	write(vec[0]);
+	for (int i(1); i < SZ(vec); ++i)
+	{cout << ' '; write(vec[i]);}
+}
+
+template<typename... Args>
+void writeln(Args... args)
+{
+	write(args...); cout << '\n';
+}
+
+void solve()
+{
+	$0
+}
 
 int main(void)
 {
 	ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
-
-	int nb_tests;
-	cin >> nb_tests;
-
-	for (int i(0); i < nb_tests; ++i)
-		cout << solve() << '\n'; 
-}
-
-ll solve(void)
-{
 	
-
-	return 0;
+	int t;
+	read(t);
+	while (t--)
+		solve();
 }
 endsnippet
-
