@@ -318,3 +318,75 @@ struct SuffixTree
 	}
 };
 endsnippet
+
+snippet PalindromicTree
+struct PalindromicTree
+{
+	struct Node
+	{
+		array<int, 26> nxt;
+		int suffLink;
+		int len;
+		int posStart;
+
+		Node(int _posStart, int _len) : len(_len), posStart(_posStart)
+		{
+			fill(nxt.begin(), nxt.end(), -1); 
+		}
+	};
+
+	vector<Node> nodes;
+
+	int suffNode;
+	string word;
+
+
+	PalindromicTree()
+	{
+		word = "";
+		nodes.emplace_back(0, -1);
+		nodes.emplace_back(0, 0);
+		nodes[0].suffLink = nodes[1].suffLink = 0;
+		suffNode = 1;
+	}
+
+	void addLetter(char c)
+	{
+		word += c;
+		int cur = suffNode;
+		int curPos = SZ(word)-1;
+		while (true)
+		{
+			int len = nodes[cur].len;
+			if (curPos - len-1 >= 0 and word[curPos-len-1] == c)
+				break;
+			cur = nodes[cur].suffLink;
+		}
+		if (nodes[cur].nxt[c-'a'] != -1)
+		{
+			suffNode = nodes[cur].nxt[c-'a'];
+			return ;
+		}
+		int lenPal = nodes[cur].len + 2;
+		nodes.emplace_back( SZ(word)-lenPal, lenPal);
+		nodes[cur].nxt[c-'a'] = SZ(nodes)-1;
+		suffNode = SZ(nodes)-1;
+		if (nodes.back().len == 1)
+		{
+			nodes.back().suffLink = 1;
+			return ;
+		}
+
+		while (true)
+		{
+			cur = nodes[cur].suffLink;
+			int len = nodes[cur].len;
+			if (curPos - len - 1 >= 0 and word[curPos-len-1] == c)
+			{
+				nodes.back().suffLink = nodes[cur].nxt[c-'a'];
+				break;
+			}
+		}
+	}
+};
+endsnippet

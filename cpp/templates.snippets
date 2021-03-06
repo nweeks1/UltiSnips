@@ -7,39 +7,11 @@ using namespace std;
 
 using ll = long long;
 
-template<typename... Args>
-void read(Args&... args)
-{
-	((cin >> args), ...);
-}
-template<typename T>
-void read(vector<T> &vec)
-{
-	for (auto &v : vec) read(v);
-}
-
-void write() {}
-template<typename H, typename... T>
-void write(const H &h, const T&... t)
-{
-	cout << h;
-	if (sizeof...(t)) {cout << ' '; write(t...);}
-}
-
-template<typename T>
-void write(const vector<T> &vec)
-{
-	if (SZ(vec) == 0) return;
-	write(vec[0]);
-	for (int i(1); i < SZ(vec); ++i)
-	{cout << ' '; write(vec[i]);}
-}
-
-template<typename... Args>
-void writeln(Args... args)
-{
-	write(args...); cout << '\n';
-}
+template<typename... Args>void read(Args&... args){	((cin >> args), ...);}
+template<typename T>void read(vector<T> &vec){	for (auto &v : vec) read(v);}
+void write() {}template<typename H, typename... T>void write(const H &h, const T&... t){	cout << h;	if (sizeof...(t)) {cout << ' '; write(t...);}}
+template<typename T>void write(const vector<T> &vec){	if (SZ(vec) == 0) return;	write(vec[0]);	for (int i(1); i < SZ(vec); ++i)	{cout << ' '; write(vec[i]);}}
+template<typename... Args>void writeln(Args... args){	write(args...); cout << '\n';}
 
 int main(void)
 {
