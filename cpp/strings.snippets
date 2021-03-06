@@ -1,4 +1,5 @@
 snippet SuffixArray "Suffix Array function"
+// https://github.com/nweeks1/UltiSnips
 pair<vector<int>, vector<int>> suffix_array(string s)
 {
 	s += '\0';
@@ -66,6 +67,7 @@ pair<vector<int>, vector<int>> suffix_array(string s)
 endsnippet
 
 snippet LCParray "Build lcp array"
+// https://github.com/nweeks1/UltiSnips
 vector<int> build_lcp_array(string s)
 {
 	auto [comp, order] = suffix_array(s);
@@ -85,6 +87,7 @@ vector<int> build_lcp_array(string s)
 endsnippet
 
 snippet Zfunction "builds z function"
+// https://github.com/nweeks1/UltiSnips
 vector<int> zFunction(const string &s)
 {
 	int len = SZ(s);
@@ -106,6 +109,7 @@ vector<int> zFunction(const string &s)
 endsnippet
 
 snippet Hash
+// https://github.com/nweeks1/UltiSnips
 using Mint1 = ModInt<int(1e9+7)>;
 using Mint2 = ModInt<int(1e9+9)>;
 using Mpair = pair<Mint1, Mint2>;
@@ -131,6 +135,7 @@ void preCalc(void)
 endsnippet
 
 snippet Kmp
+// https://github.com/nweeks1/UltiSnips
 vector<int> prefixFun(const string &s)
 {
 	int len = SZ(s);
@@ -148,6 +153,7 @@ vector<int> prefixFun(const string &s)
 endsnippet
 
 snippet SuffixTree
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 struct Node
 {

@@ -1,4 +1,5 @@
 snippet Sos
+// https://github.com/nweeks1/UltiSnips
 // ret[i] = sum j subset i a[j]
 // Changing k or inv for mobius inversion
 // O(n2^n)
@@ -19,6 +20,7 @@ vector<T> mobiusTransform(int n, const vector<T> &a, int k = -1, bool inv = fals
 endsnippet
 
 snippet SubsetConv
+// https://github.com/nweeks1/UltiSnips
 // ret[S] = sum X subset S a[X] b[S\X]
 // O(n^2 2^n)
 template<class T>
@@ -46,6 +48,7 @@ vector<T> subsetConvolution(int n, const vector<T> &a, const vector<T> &b)
 endsnippet
 
 snippet OrConv
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 void orFFT(vector<T> &a, bool inv=false)
 {
@@ -71,6 +74,7 @@ void orConv(vector<T> a, vector<T> b)
 endsnippet
 
 snippet AndConv
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 void andFFT(vector<T> &a, bool inv=false)
 {
@@ -96,6 +100,7 @@ vector<T> andConv(vector<T> a, vector<T> b)
 endsnippet
 
 snippet XorConv
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 void xorFFT(vector<T> &a, bool inv=false)
 {

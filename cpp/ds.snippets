@@ -1,4 +1,5 @@
-snippet SumPoint "range sum, point modification"
+snippet Fenwick "range sum, point modification"
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 struct FenwickTree {
 	vector<T> bit;  // binary indexed tree
@@ -33,6 +34,7 @@ struct FenwickTree {
 endsnippet
 
 snippet LazyAddMax "range add, range max"
+// https://github.com/nweeks1/UltiSnips
 struct LazyAddMax
 {
 	vector<ll> seg;
@@ -111,6 +113,7 @@ struct LazyAddMax
 endsnippet
 
 snippet MaxPoint "range max, point update"
+// https://github.com/nweeks1/UltiSnips
 struct rangeMax
 {
 	vector<ll> seg;
@@ -156,6 +159,7 @@ struct rangeMax
 endsnippet
 
 snippet BuildSeg "Basic build of segment tree"
+// https://github.com/nweeks1/UltiSnips
 void buildTree(int node, int l, int r)
 {
 	li[node] = l, ri[node] = r;
@@ -168,6 +172,7 @@ void buildTree(int node, int l, int r)
 endsnippet
 
 snippet LinkCut "link cut tree"
+// https://github.com/nweeks1/UltiSnips
 struct SplayTree
 {
 	struct Node
@@ -304,6 +309,7 @@ struct LinkCut : SplayTree
 endsnippet
 
 snippet LiChao
+// https://github.com/nweeks1/UltiSnips
 using T = __int128; // To avoid overflow
 struct Line
 {

@@ -1,4 +1,5 @@
 snippet unionFind "unionfind"
+// https://github.com/nweeks1/UltiSnips
 struct UnionFind
 {
 	vector<int> id;
@@ -40,6 +41,7 @@ struct UnionFind
 endsnippet
 
 snippet RollbackDSU
+// https://github.com/nweeks1/UltiSnips
 struct DsuRollBack
 {
 	vector<int> id;
@@ -71,9 +73,10 @@ struct DsuRollBack
 endsnippet
 
 snippet BFS
+// https://github.com/nweeks1/UltiSnips
 vector<int> bfs(int source, const vector<vector<int>> &g)
 {
-	vector<int> dis(nbSommets, 1e9);
+	vector<int> dis(SZ(g), 1e9);
 	dis[source] = 0;
 	queue<int> q;
 	q.push(source);
@@ -93,6 +96,7 @@ vector<int> bfs(int source, const vector<vector<int>> &g)
 endsnippet
 
 snippet SCC
+// https://github.com/nweeks1/UltiSnips
 vector<vector<int>> calcSCC(const vector<vector<int>> &g)
 {
 	vector<vector<int>> rg(SZ(g));
@@ -130,6 +134,7 @@ vector<vector<int>> calcSCC(const vector<vector<int>> &g)
 endsnippet
 
 snippet Dijkstra
+// https://github.com/nweeks1/UltiSnips
 auto dijsktra(int source, const vector<vector<Edge>> &g)
 {
 	vector<ll> dis(SZ(g), 1e18);
@@ -156,6 +161,7 @@ auto dijsktra(int source, const vector<vector<Edge>> &g)
 endsnippet
 
 snippet Kshortest
+// https://github.com/nweeks1/UltiSnips
 struct Edge
 {
 	ll to, cost, id;
@@ -271,6 +277,7 @@ vector<ll> kShortestPaths(int s, int t, int K, const vector<vector<Edge>> &g)
 endsnippet
 
 snippet Bridge
+// https://github.com/nweeks1/UltiSnips
 vector<pair<int, int>> bridges(const vector<vector<Edge>> &g)
 {
 	int nbSommets(SZ(g));
@@ -304,6 +311,7 @@ vector<pair<int, int>> bridges(const vector<vector<Edge>> &g)
 endsnippet
 
 snippet TwoEdge
+// https://github.com/nweeks1/UltiSnips
 vector<vector<int>> two_edge_components(const vector<vector<Edge>> &g)
 {
 	int nbSommets(SZ(g));
@@ -334,6 +342,7 @@ vector<vector<int>> two_edge_components(const vector<vector<Edge>> &g)
 endsnippet
 
 snippet ThreeEdge
+/// https://github.com/nweeks1/UltiSnips
 vector<vector<int>> three_edge_comps(const vector<vector<int>> &g)
 {
 	int nbSommets(SZ(g));
@@ -414,6 +423,7 @@ vector<vector<int>> three_edge_comps(const vector<vector<int>> &g)
 endsnippet
 
 snippet GeneralMatching
+// https://github.com/nweeks1/UltiSnips 
 vector<pair<int, int>> generalMatching(int N, vector<pair<int,int>> &ed)
 {
 	vector<vector<Mint>> mat(N, vector<Mint>(N)), A;
@@ -473,6 +483,7 @@ done:
 endsnippet
 
 snippet EulerWalk
+// https://github.com/nweeks1/UltiSnips
 // Finds euler tour/walk starting at src
 vector<int> eulerWalk(const vector<vector<pair<int, int>>> &g, int nbAretes, int src=0)
 {
@@ -497,6 +508,7 @@ vector<int> eulerWalk(const vector<vector<pair<int, int>>> &g, int nbAretes, int
 endsnippet
 
 snippet DirectedMST
+// https://github.com/nweeks1/UltiSnips
 struct Edge
 {
 	int a, b; ll w;

@@ -1,9 +1,11 @@
 snippet Random
+// https://github.com/nweeks1/UltiSnips
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 int randint(int lb, int ub){ return uniform_int_distribution<int>(lb, ub)(rng); }
 endsnippet
 
 snippet Letrec
+// https://github.com/nweeks1/UltiSnips
 template<class Fun>
 class y_combinator_result {
 	Fun fun_;
@@ -23,6 +25,7 @@ decltype(auto) y_combinator(Fun &&fun) {
 endsnippet
 
 snippet MatInv
+// https://github.com/nweeks1/UltiSnips
 int matInv(vector<vector<Mint>>& A)
 {
 	int n = SZ(A); 
@@ -76,6 +79,7 @@ found:
 endsnippet
 
 snippet CartesianTree
+// https://github.com/nweeks1/UltiSnips
 // Elements must be distinct !
 vector<int> calcCartesianTree(const vector<ll> &arr)
 {
@@ -115,6 +119,7 @@ vector<int> calcCartesianTree(const vector<ll> &arr)
 endsnippet
 
 snippet OrderedSet
+// https://github.com/nweeks1/UltiSnips
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 using namespace __gnu_pbds;
@@ -122,6 +127,7 @@ template<class T> using oset =tree<T, null_type, less<T>, rb_tree_tag,tree_order
 endsnippet
 
 snippet Matrix
+// https://github.com/nweeks1/UltiSnips
 template<class T>
 struct Matrix
 {
