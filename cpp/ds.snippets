@@ -1,35 +1,26 @@
 snippet Fenwick "range sum, point modification"
-// https://github.com/nweeks1/UltiSnips
-template<class T>
-struct FenwickTree {
-	vector<T> bit;  // binary indexed tree
-	int n;
+template <class T> class Fenwick {
+	public:
+		int lim;
+		vector<T> bit;
 
-	FenwickTree(int N) {
-		this->n = N;
-		bit.assign(N, T(0));
-	}
+		Fenwick(int n) : lim(n + 1), bit(lim) {}
 
-	FenwickTree(vector<T> a) : FenwickTree(a.size()) {
-		for (size_t i = 0; i < a.size(); i++)
-			add(i, a[i]);
-	}
+		void upd(int pos, T val) {
+			for (pos++; pos < lim; pos += pos & -pos)
+				bit[pos] += val;
+		}
 
-	T sum(T r) {
-		T ret(0);
-		for (; r >= 0; r = (r & (r + 1)) - 1)
-			ret += bit[r];
-		return ret;
-	}
+		T sum(int r) { // < r
+			T ret = 0;
+			for (; r; r -= r & -r)
+				ret += bit[r];
+			return ret;
+		}
 
-	T sum(int l, int r) {
-		return sum(r) - sum(l - 1);
-	}
-
-	void add(int idx, T delta) {
-		for (; idx < n; idx = idx | (idx + 1))
-			bit[idx] += delta;
-	}
+		T sum(int l, int r) { // [l, r)
+			return sum(r) - sum(l);
+		}
 };
 endsnippet
 
@@ -113,46 +104,39 @@ struct LazyAddMax
 endsnippet
 
 snippet MaxPoint "range max, point update"
-// https://github.com/nweeks1/UltiSnips
-struct rangeMax
-{
-	vector<ll> seg;
-	int p, deb;
+template <typename T> struct rangeMax {
+	vector<T> seg;
+	int deb;
+	T neutral;
 
-	rangeMax(int N)
-	{
-		while ((1<<p) < N) ++p;
-		seg.resize((1<<(1+p)));
-		deb = (1<<p)-1;
+	rangeMax(int nbElem, T e) {
+		int sz = 1;
+		while (sz < nbElem)
+			sz *= 2;
+		neutral = e;
+		seg.assign(2 * sz, neutral);
+		deb = sz;
 	}
 
-	void update(int id, ll val)
-	{
-		id += deb;
-		seg[id] = val;
-		while (id)
-		{
-			id = (id-1)/2;
-			seg[id] = max(seg[2*id+1], seg[2*id+2]);
+	void upd(int pos, T val) {
+		pos += deb;
+		seg[pos] = val;
+		while (pos > 1) {
+			pos /= 2;
+			seg[pos] = max(seg[2 * pos], seg[2 * pos + 1]);
 		}
 	}
 
-	ll query(int l, int r)
-	{
-		ll ret(0);
-		l += deb;
-		r += deb;
-		while (l < r)
-		{
-			if (l%2==0)
-				ret = max(ret, seg[l]);
-			if (r%2)
-				ret = max(ret, seg[r]);
-			l /= 2;
-			r = (r-2)/2;
+	T query(int l, int r) { // [l, r)
+		T ret = neutral;
+		l += deb, r += deb;
+		while (l < r) {
+			if (l % 2)
+				ret = max(ret, seg[l++]);
+			if (r % 2)
+				ret = max(ret, seg[--r]);
+			r /= 2, l /= 2;
 		}
-		if (l == r)
-			ret = max(ret, seg[r]);
 		return ret;
 	}
 };
@@ -172,81 +156,74 @@ void buildTree(int node, int l, int r)
 endsnippet
 
 snippet LinkCut "link cut tree"
-// https://github.com/nweeks1/UltiSnips
-struct SplayTree
-{
-	struct Node
-	{
+struct SplayTree {
+	struct Node {
 		int ch[2] = {0, 0}, p = 0;
-		ll self = 0, path = 0;
-		ll sub = 0, vir = 0;
+		int self = 0, path = 0, sub = 0, vir = 0;
 		bool flip = 0;
 	};
 	vector<Node> T;
 
-	SplayTree(int n) : T(n+1) {}
+	SplayTree(int n) : T(n + 1) {}
 
-	void push(int x)
-	{
-		if (!x || !T[x].flip) return ;
+	void push(int x) {
+		if (!x || !T[x].flip)
+			return;
 		int l = T[x].ch[0], r = T[x].ch[1];
-
 		T[l].flip ^= 1, T[r].flip ^= 1;
 		swap(T[x].ch[0], T[x].ch[1]);
-		T[x].flip= 0;
+		T[x].flip = 0;
 	}
 
-	void pull(int x)
-	{
+	void pull(int x) {
 		int l = T[x].ch[0], r = T[x].ch[1];
-		push(l); push(r);
+		push(l);
+		push(r);
 		T[x].path = T[l].path + T[x].self + T[r].path;
 		T[x].sub = T[x].vir + T[l].sub + T[r].sub + T[x].self;
 	}
 
-	void set(int x, int d, int y)
-	{
+	void set(int x, int d, int y) {
 		T[x].ch[d] = y, T[y].p = x;
 		pull(x);
 	}
-	
-	void splay(int x)
-	{
-		auto dir = [&](int x)
-		{
-			int p = T[x].p; if (!p) return -1;
+
+	void splay(int x) {
+		auto dir = [&](int x) {
+			int p = T[x].p;
+			if (!p)
+				return -1;
 			return T[p].ch[0] == x ? 0 : T[p].ch[1] == x ? 1 : -1;
 		};
-		auto rotate = [&](int x)
-		{
+		auto rotate = [&](int x) {
 			int y = T[x].p, z = T[y].p, dx = dir(x), dy = dir(y);
-			set(y, dx, T[x].ch[!dx]); 
+			set(y, dx, T[x].ch[!dx]);
 			set(x, !dx, y);
-			if (~dy) set(z, dy, x); 
-      T[x].p = z;
+			if (~dy)
+				set(z, dy, x);
+			T[x].p = z;
 		};
-		for (push(x); ~dir(x);)
-		{
+		for (push(x); ~dir(x);) {
 			int y = T[x].p, z = T[y].p;
-			push(z); push(y); push(x);
+			push(z);
+			push(y);
+			push(x);
 			int dx = dir(x), dy = dir(y);
-			if (~dy) rotate(dx != dy ? x : y);
+			if (~dy)
+				rotate(dx != dy ? x : y);
 			rotate(x);
 		}
 	}
 };
 
-struct LinkCut : SplayTree
-{
+struct LinkCut : SplayTree {
 	LinkCut(int n) : SplayTree(n) {}
 
-	int access(int x)
-	{
+	int access(int x) {
 		int u = x, v = 0;
-		for (; u; v = u, u = T[u].p)
-		{
+		for (; u; v = u, u = T[u].p) {
 			splay(u);
-			int& ov = T[u].ch[1];
+			int &ov = T[u].ch[1];
 			T[u].vir += T[ov].sub;
 			T[u].vir -= T[v].sub;
 			ov = v;
@@ -256,53 +233,58 @@ struct LinkCut : SplayTree
 		return v;
 	}
 
-	void reroot(int x)
-	{
-		access(x); T[x].flip ^= 1; push(x);
+	void reroot(int x) {
+		access(x);
+		T[x].flip ^= 1;
+		push(x);
 	}
 
-	void link(int u, int v)
-	{	
+	void link(int u, int v) {
 		++u, ++v;
-		reroot(u); access(v);
+		reroot(u);
+		access(v);
 		T[v].vir += T[u].sub;
 		T[u].p = v;
 		pull(v);
 	}
 
-	void cut(int u, int v)
-	{
-		++u, ++v;
-		reroot(u); access(v);
-		T[v].ch[0] = T[u].p = 0; 
+	void cut(int u, int v) {
+		reroot(++u);
+		access(++v);
+		T[v].ch[0] = T[u].p = 0;
 		pull(v);
 	}
 
-	int lca(int u, int v)
-	{
+	int lca(int u, int v) {
 		++u, ++v;
-		if (u == v) return u;
-		access(u); int ret = access(v);
+		if (u == v)
+			return u;
+		access(u);
+		int ret = access(v);
 		return T[u].p ? ret : 0;
 	}
 
-	ll subTree(int u, int v) // Calculates subtree aggregate for u when rooted at v
+	int subTree(int u,
+			int v) // Calculates subtree aggregate for u when rooted at v
 	{
 		++u, ++v;
-		reroot(v); access(u); 
+		reroot(v);
+		access(u);
 		return T[u].vir + T[u].self;
 	}
 
-	ll path(int u, int v) // puts v at root, and path to u is in left child.
+	int path(int u, int v) // puts v at root, and path to u is in left child.
 	{
 		++u, ++v;
-		reroot(u); access(v); return T[v].path;
+		reroot(u);
+		access(v);
+		return T[v].path;
 	}
 
-	void update(int u, ll v)
-	{
+	void update(int u, int v) {
 		++u;
-		access(u); T[u].self = v; 
+		access(u);
+		T[u].self = v;
 		pull(u);
 	}
 };
@@ -316,7 +298,7 @@ struct Line
 	ll a, b;
 	Line(ll a, ll b) : a(a), b(b) {}
 	Line() {}
-  T get(ll x) { return a * T(x) + b;}
+	T get(ll x) { return a * T(x) + b;}
 };
 
 // Li chao tree
@@ -328,8 +310,8 @@ struct Node
 	Node(Line l, ll lo, ll hi) : line(l), lo(lo), hi(hi) {}
 
 	void add(Line addL){
-  	if (addL.get(lo) > line.get(lo)) swap(line, addL);
-    if (addL.get(hi) <= line.get(hi) or lo == hi) return;
+		if (addL.get(lo) > line.get(lo)) swap(line, addL);
+		if (addL.get(hi) <= line.get(hi) or lo == hi) return;
 		ll mid = lo + (hi - lo)/2;
 		if (line.get(mid) > addL.get(mid))
 		{
@@ -365,5 +347,23 @@ struct LiChao
 	}
 
 	ll get(ll x) { return ll(root->get(x));}
+};
+endsnippet
+
+snippet RMQ
+template <class T> struct RMQ {
+	vector<vector<T>> jmp;
+	RMQ(const vector<T> &V) : jmp(1, V) {
+		for (int pw = 1, k = 1; pw * 2 <= (int)V.size(); pw *= 2, ++k) {
+			jmp.emplace_back((int)V.size() - pw * 2 + 1);
+			for (int j = 0; j < (int)jmp[k].size(); ++j)
+				jmp[k][j] = max(jmp[k - 1][j], jmp[k - 1][j + pw]);
+		}
+	}
+	T query(int a, int b) { // [a, b)
+		assert(a < b);
+		int dep = 31 - __builtin_clz(b - a);
+		return max(jmp[dep][a], jmp[dep][b - (1 << dep)]);
+	}
 };
 endsnippet

@@ -1,11 +1,9 @@
 snippet Random
-// https://github.com/nweeks1/UltiSnips
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 int randint(int lb, int ub){ return uniform_int_distribution<int>(lb, ub)(rng); }
 endsnippet
 
 snippet Letrec
-// https://github.com/nweeks1/UltiSnips
 template<class Fun>
 class y_combinator_result {
 	Fun fun_;
@@ -25,7 +23,6 @@ decltype(auto) y_combinator(Fun &&fun) {
 endsnippet
 
 snippet MatInv
-// https://github.com/nweeks1/UltiSnips
 int matInv(vector<vector<Mint>>& A)
 {
 	int n = SZ(A); 
@@ -63,7 +60,7 @@ found:
 			tmp[i][j] *= v;
 		A[i][i] = 1;
 	}
-	
+
 	for (int i(n-1); i > 0; --i)
 		for (int j(0); j < i; ++j)
 		{
@@ -182,4 +179,89 @@ struct Matrix
 		return ret;
 	}
 };
+endsnippet
+
+snippet range "$1.begin(), $1.end() (beginend)" i
+${1:vec}.begin(), $1.end()$0
+endsnippet
+
+snippet forr "for range loop"
+for(auto ${2:v} : ${1:vec}) {
+	${0:/* code */}
+}
+endsnippet
+
+snippet for
+for (int ${1:i} = ${2:0}; $1 < ${3:n}; ++$1) {
+	$0
+}
+endsnippet
+
+snippet readv "read vector"
+for (auto &v : ${1:vec})
+	cin >> v;
+	$0
+endsnippet
+
+snippet Roman
+	int romanToDec(string s) {
+		map<char, int> value;
+		value['I'] = 1;
+		value['V'] = 5;
+		value['X'] = 10;
+		value['L'] = 50;
+		value['C'] = 100;
+		value['D'] = 500;
+		value['M'] = 1000;
+
+		int ret = 0;
+		int len = s.size();
+		vector<bool> removed(len);
+		for (int i = 0; i + 1 < len; ++i) {
+			if (value[s[i]] < value[s[i + 1]])
+				ret -= value[s[i]], removed[i] = true;
+		}
+		for (int i = 0; i < len; ++i)
+			if (!removed[i])
+				ret += value[s[i]];
+		return ret;
+	}
+
+string decToRoman(int x) {
+
+	static vector<int> deltas = {1000, 900, 500, 400, 100, 90, 50,
+		40,   10,  9,   5,   4,   1};
+	static vector<string> patterns = {"M",  "CM", "D",  "CD", "C",  "XC", "L",
+		"XL", "X",  "IX", "V",  "IV", "I"};
+
+	assert(patterns.size() == deltas.size());
+	string ret = "";
+	int nbDeltas = deltas.size();
+	for (int i = 0; i < nbDeltas; ++i) {
+		while (x >= deltas[i])
+			ret.append(patterns[i]), x -= deltas[i];
+	}
+	assert(!x);
+	return ret;
+}
+endsnippet
+
+snippet FastInput
+inline char gc() { // like getchar()
+	static char buf[1 << 16];
+	static size_t bc, be;
+	if (bc >= be) {
+		buf[0] = 0, bc = 0;
+		be = fread(buf, 1, sizeof(buf), stdin);
+	}
+	return buf[bc++]; // returns 0 on EOF
+}
+
+int readInt() {
+	int a, c;
+	while ((a = gc()) < 40);
+	if (a == '-') return -readInt();
+	while ((c = gc()) >= 48) a = a * 10 + c - 480;
+	return a - 48;
+}
 endsnippet

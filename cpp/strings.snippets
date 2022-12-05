@@ -1,96 +1,48 @@
 snippet SuffixArray "Suffix Array function"
-// https://github.com/nweeks1/UltiSnips
-pair<vector<int>, vector<int>> suffix_array(string s)
-{
-	s += '\0';
-	int q(0);
-	while ((1<<q) < SZ(s))
-		++q;
-	int len(SZ(s));
+/*
+ * sa[i] = starting index of i-th smallest suffix
+ * sa.len() = n+ 1, sa[0] = n
+ * lcp[i] = lcp(sa[i], sa[i-1]), lcp[0] = 0, len(sa) = n+1
+ */
 
-	const int MAXN = 256;
-	vector<int> count(MAXN);
-	vector<int> countBis;
-	for (auto c : s)
-		count[c]++;
-	for (int i(1); i < MAXN; ++i)
-		count[i] += count[i-1];
-	vector<int> order(len);
-	vector<int> tempOrder(len);
-	for (int i(0); i < len; ++i)
-		order[--count[s[i]]] = i;
-	int cntClass(1);
-	vector<int> comp(len);
-	comp[order[0]] = 0;
-	for (int i(1); i < len; ++i)
-	{
-		if (s[order[i]] != s[order[i-1]])
-			++cntClass;
-		comp[order[i]] = cntClass-1;
-	}
-	vector<pair<int, int>> ids(len);
-	for (int p(1); p <= q; ++p)
-	{
-		int delta(1<<(p-1));
-		for (int i(0); i < len; ++i)
-		{
-			int ii = (i + delta)%len;
-			ids[i] = make_pair(comp[i], comp[ii]);
-		}
-		count.assign(cntClass, 0);
-		countBis.assign(cntClass, 0);
-		for (int i(0); i < len; ++i)
-			count[ids[i].second]++;
-		for (int i(1); i < cntClass; ++i)
-			count[i] += count[i-1];
-		for (int i(0); i < len; ++i)
-			order[--count[ids[i].second]] = i;
-		for (int i(0); i < len; ++i)
-			countBis[ids[i].first]++;
-		for (int i(1); i < cntClass; ++i)
-			countBis[i]+=countBis[i-1];
-		for (int i(len-1); i >= 0; --i)
-			tempOrder[--countBis[ids[order[i]].first]] = order[i];
-		for (int i(0); i < len; ++i)
-			order[i] = tempOrder[i];
-		cntClass=1;
-		comp[order[0]] = 0;
-		for (int i(1); i < len; ++i)
-		{
-			if (ids[order[i]] != ids[order[i-1]])
-				cntClass++;
-			comp[order[i]] = cntClass-1;
-		}
-	}
-	return make_pair(comp, order);
-}
-endsnippet
+struct SuffixArray {
+	vector<int> sa, lcp;
+	SuffixArray(string &s, int lim = 256) {
+		int n = s.size() + 1, k = 0, a, b;
+		vector<int> x(s.begin(), s.end() + 1), y(n), ws(max(n, lim)), rank(n);
+		sa = lcp = y, iota(sa.begin(), sa.end(), 0);
 
-snippet LCParray "Build lcp array"
-// https://github.com/nweeks1/UltiSnips
-vector<int> build_lcp_array(string s)
-{
-	auto [comp, order] = suffix_array(s);
-	s+='\0';
-	int len = SZ(s);
-	vector<int> lcp(len-1);
-	int k(0);
-	for (int i(0); i < len-1; ++i)
-	{
-		int j = order[comp[i]-1];
-		while (s[i+k] == s[j+k]) ++k;
-		lcp[comp[i]-1] = k;
-		k = max(0, k-1);
+		for (int j = 0, p = 0; p < n; j = max(1, 2 * j), lim = p) {
+			p = j, iota(y.begin(), y.end(), n - j);
+			for (int i = 0; i < n; ++i)
+				if (sa[i] >= j)
+					y[p++] = sa[i] - j;
+			fill(ws.begin(), ws.end(), 0);
+			for (int i = 0; i < n; ++i)
+				ws[x[i]]++;
+			for (int i = 1; i < lim; ++i)
+				ws[i] += ws[i - 1];
+			for (int i = n; i--;)
+				sa[--ws[x[y[i]]]] = y[i];
+			swap(x, y);
+			p = 1, x[sa[0]] = 0;
+			for (int i = 1; i < n; ++i)
+				a = sa[i - 1], b = sa[i],
+				x[b] = (y[a] == y[b] and y[a + j] == y[b + j]) ? p - 1 : p++;
+		}
+		for (int i = 1; i < n; ++i)
+			rank[sa[i]] = i;
+		for (int i = 0, j; i < n - 1; lcp[rank[i++]] = k)
+			for (k &&k--, j = sa[rank[i] - 1]; s[i + k] == s[j + k]; k++)
+				;
 	}
-	return lcp;
-}
+};
 endsnippet
 
 snippet Zfunction "builds z function"
-// https://github.com/nweeks1/UltiSnips
 vector<int> zFunction(const string &s)
 {
-	int len = SZ(s);
+	int len = s.size();
 
 	vector<int> z(len);
 	z[0] = len;
@@ -109,7 +61,6 @@ vector<int> zFunction(const string &s)
 endsnippet
 
 snippet Hash
-// https://github.com/nweeks1/UltiSnips
 using Mint1 = ModInt<int(1e9+7)>;
 using Mint2 = ModInt<int(1e9+9)>;
 using Mpair = pair<Mint1, Mint2>;
@@ -135,7 +86,6 @@ void preCalc(void)
 endsnippet
 
 snippet Kmp
-// https://github.com/nweeks1/UltiSnips
 vector<int> prefixFun(const string &s)
 {
 	int len = SZ(s);
@@ -153,7 +103,6 @@ vector<int> prefixFun(const string &s)
 endsnippet
 
 snippet SuffixTree
-// https://github.com/nweeks1/UltiSnips
 template<class T>
 struct Node
 {
@@ -385,6 +334,72 @@ struct PalindromicTree
 			{
 				nodes.back().suffLink = nodes[cur].nxt[c-'a'];
 				break;
+			}
+		}
+	}
+};
+endsnippet
+
+snippet AhoCorasick
+struct AhoCorasick {
+	// TO CHANGE
+	static const int ALPHABET_SIZE = 128, START = 0;
+	struct Node {
+		array<int, ALPHABET_SIZE> go;
+		int back, start = -1, end = -1, nbMatchs = 0;
+
+		Node() { go.fill(-1); }
+	};
+	vector<Node> nodes;
+	vector<int> backup;
+	vector<string> patterns;
+	int nbFeuilles = 0;
+
+	AhoCorasick() : nodes(1) {}
+
+	void addString(const string &s) {
+		patterns.push_back(s);
+		assert(!s.empty());
+		int curNode = 0;
+		for (char d : s) {
+			int c = d - START;
+			if (nodes[curNode].go[c] == -1) {
+				nodes[curNode].go[c] = nodes.size();
+				nodes.emplace_back();
+			}
+			curNode = nodes[curNode].go[c];
+		}
+		if (nodes[curNode].end == -1)
+			nodes[curNode].start = nbFeuilles;
+		backup.push_back(nodes[curNode].end);
+		nodes[curNode].end = nbFeuilles++;
+		nodes[curNode].nbMatchs++;
+	}
+
+	void computeFailures() {
+		nodes[0].back = nodes.size();
+		nodes.emplace_back();
+		nodes.back().go.fill(0);
+		queue<int> q;
+		q.push(0);
+		while (!q.empty()) {
+			int u = q.front();
+			q.pop();
+			int prev = nodes[u].back;
+			for (int i = 0; i < ALPHABET_SIZE; ++i) {
+				int &v = nodes[u].go[i];
+				int goBack = nodes[prev].go[i];
+				if (v == -1)
+					v = goBack;
+				else {
+					nodes[v].back = goBack;
+					if (nodes[v].end == -1)
+						nodes[v].end = nodes[goBack].end;
+					else
+						backup[nodes[v].start] = nodes[goBack].end;
+					nodes[v].nbMatchs += nodes[goBack].nbMatchs;
+					q.push(v);
+				}
 			}
 		}
 	}

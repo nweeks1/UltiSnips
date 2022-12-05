@@ -1,9 +1,8 @@
 snippet unionFind "unionfind"
-// https://github.com/nweeks1/UltiSnips
 struct UnionFind
 {
 	vector<int> id;
-	
+
 	UnionFind() {}
 	UnionFind(int N)
 	{
@@ -25,23 +24,10 @@ struct UnionFind
 		id[v] = u;
 		return true;
 	}
-
-	vector<vector<int>> getComps()
-	{
-		vector<vector<int>> ret;
-		vector<vector<int>> comps(SZ(id));
-		for (int i(0); i < SZ(id); ++i)
-			comps[find(i)].push_back(i);
-		for (auto v : comps)
-			if (SZ(v))
-				ret.push_back(v);
-		return ret;
-	}
 };
 endsnippet
 
 snippet RollbackDSU
-// https://github.com/nweeks1/UltiSnips
 struct DsuRollBack
 {
 	vector<int> id;
@@ -139,7 +125,7 @@ auto dijsktra(int source, const vector<vector<Edge>> &g)
 {
 	vector<ll> dis(SZ(g), 1e18);
 	vector<ll> par(SZ(g), -1);
-	
+
 	dis[source] = 0;
 	using pli = pair<ll, int>;
 	priority_queue<pli, vector<pli>, greater<pli>> pq;
@@ -175,7 +161,7 @@ struct Node
 {
 	Node *ch[2];
 	T val;
-	
+
 	Node(T v) { ch[0] = ch[1] = nullptr; val = v;}
 	Node() {ch[0] = ch[1] = nullptr;}
 	Node *copy()
@@ -284,24 +270,24 @@ vector<pair<int, int>> bridges(const vector<vector<Edge>> &g)
 	vector<int> lo(nbSommets, nbSommets), depth(nbSommets), par(nbSommets,-1);
 	vector<bool> seen(nbSommets);
 	vector<pair<int, int>> bridge;
-	
+
 	auto dfs = y_combinator([&](auto dfs, int u) -> void
 			{
-				seen[u] = true;
-				lo[u] = depth[u];
-				for (auto [v, id] : g[u])
-					if (id != par[u])
-					{
-						if (!seen[v])
-						{
-							depth[v] = depth[u] + 1;
-							par[v] = id;
-							dfs(v);
-							if (lo[v] > depth[u])
-								bridge.emplace_back(u, v);
-						}
-						lo[u] = min(lo[u], lo[v]);
-					}
+			seen[u] = true;
+			lo[u] = depth[u];
+			for (auto [v, id] : g[u])
+			if (id != par[u])
+			{
+			if (!seen[v])
+			{
+			depth[v] = depth[u] + 1;
+			par[v] = id;
+			dfs(v);
+			if (lo[v] > depth[u])
+			bridge.emplace_back(u, v);
+			}
+			lo[u] = min(lo[u], lo[v]);
+			}
 			});
 	for (int u(0); u < nbSommets; ++u)
 		if (!seen[u])
@@ -322,12 +308,12 @@ vector<vector<int>> two_edge_components(const vector<vector<Edge>> &g)
 	vector<bool> seen(nbSommets);
 	auto dfs = y_combinator([&](auto dfs, int u, vector<int> &comp) -> void
 			{
-				if (seen[u]) return;
-				seen[u] = true;
-				comp.push_back(u);
-				for (auto [v,_] : g[u])
-					if (!blocked.count({u, v}))
-						dfs(v, comp);
+			if (seen[u]) return;
+			seen[u] = true;
+			comp.push_back(u);
+			for (auto [v,_] : g[u])
+			if (!blocked.count({u, v}))
+			dfs(v, comp);
 			});
 	vector<vector<int>> comps;
 	for (int u(0); u < nbSommets; ++u)
@@ -362,57 +348,57 @@ vector<vector<int>> three_edge_comps(const vector<vector<int>> &g)
 	int t(0);
 	auto dfs = y_combinator([&](auto dfs, const int u, int p) -> void
 			{
-				seen[u] = true;
-				in[u] = t++;
-				for (int v : g[u])
+			seen[u] = true;
+			in[u] = t++;
+			for (int v : g[u])
+			{
+			if (u == v) continue;
+			if (v == p)
+			{
+			p = nbSommets;
+			continue;
+			}
+			if (seen[v])
+			{
+			if (in[v] < in[u])
+			{
+			deg[u]++;
+			low[u] = min(low[u], in[v]);
+			}
+			else
+			{
+				deg[u]--;
+				int w = path[u];
+				while (w != nbSommets and in[w] <= in[v] and in[v] < out[w])
 				{
-					if (u == v) continue;
-					if (v == p)
-					{
-						p = nbSommets;
-						continue;
-					}
-					if (seen[v])
-					{
-						if (in[v] < in[u])
-						{
-							deg[u]++;
-							low[u] = min(low[u], in[v]);
-						}
-						else
-						{
-							deg[u]--;
-							int w = path[u];
-							while (w != nbSommets and in[w] <= in[v] and in[v] < out[w])
-							{
-								absorb(u, w);
-								w = path[w];
-							}
-							path[u] = w;
-						}
-						continue;
-					}
-					dfs(v, u);
-					if (path[v] == nbSommets and deg[v] <= 1)
-					{
-						deg[u] += deg[v];
-						low[u] = min(low[u], low[v]);
-						continue;
-					}
-					else if (deg[v] == 0)
-						v = path[v];
-					if (low[v] < low[u])
-					{
-						low[u] = low[v];
-						swap(path[u], v);
-					}
-					while (v != nbSommets)
-					{
-						absorb(u, v);
-						v = path[v];
-					}
+					absorb(u, w);
+					w = path[w];
 				}
-				out[u] = t;
+				path[u] = w;
+			}
+			continue;
+			}
+			dfs(v, u);
+			if (path[v] == nbSommets and deg[v] <= 1)
+			{
+				deg[u] += deg[v];
+				low[u] = min(low[u], low[v]);
+				continue;
+			}
+			else if (deg[v] == 0)
+				v = path[v];
+			if (low[v] < low[u])
+			{
+				low[u] = low[v];
+				swap(path[u], v);
+			}
+			while (v != nbSommets)
+			{
+				absorb(u, v);
+				v = path[v];
+			}
+			}
+			out[u] = t;
 			});
 	for (int i(0); i < nbSommets; ++i)
 		if (!seen[i])
@@ -423,7 +409,6 @@ vector<vector<int>> three_edge_comps(const vector<vector<int>> &g)
 endsnippet
 
 snippet GeneralMatching
-// https://github.com/nweeks1/UltiSnips 
 vector<pair<int, int>> generalMatching(int N, vector<pair<int,int>> &ed)
 {
 	vector<vector<Mint>> mat(N, vector<Mint>(N)), A;
@@ -483,7 +468,6 @@ done:
 endsnippet
 
 snippet EulerWalk
-// https://github.com/nweeks1/UltiSnips
 // Finds euler tour/walk starting at src
 vector<int> eulerWalk(const vector<vector<pair<int, int>>> &g, int nbAretes, int src=0)
 {
@@ -508,7 +492,6 @@ vector<int> eulerWalk(const vector<vector<pair<int, int>>> &g, int nbAretes, int
 endsnippet
 
 snippet DirectedMST
-// https://github.com/nweeks1/UltiSnips
 struct Edge
 {
 	int a, b; ll w;
@@ -585,4 +568,151 @@ pair<ll, vector<int>> directedMst(int n, int r, vector<Edge> &g)
 	for (int i(0); i < n; ++i) par[i] = in[i].a;
 	return {ret, par};
 }
+endsnippet
+
+snippet 2sat
+// addVar creates new var, returns x, use x to access var, and ~x to access not
+// var
+struct twoSat {
+	int nbSommets;
+	vector<vector<int>> gr;
+	vector<int> values; // 0 = false, 1 = true
+
+	twoSat(int n = 0) : nbSommets(n), gr(2 * n) {}
+
+	int addVar() {
+		gr.emplace_back();
+		gr.emplace_back();
+		return nbSommets++;
+	}
+
+	void either(int f, int j) {
+		f = max(2 * f, -1 - 2 * f);
+		j = max(2 * j, -1 - 2 * j);
+		gr[f].push_back(j ^ 1);
+		gr[j].push_back(f ^ 1);
+	}
+
+	void setValue(int x) { either(x, x); }
+
+	void atMostOne(const vector<int> &li) {
+		if ((li).size() <= 1)
+			return;
+		int cur = ~li[0];
+		for (int i = 2; i < (int)li.size(); ++i) {
+			int nxt = addVar();
+			either(cur, ~li[i]);
+			either(cur, nxt);
+			either(~li[i], nxt);
+			cur = ~nxt;
+		}
+		either(cur, ~li[1]);
+	}
+
+	vector<int> val, comp, z;
+	int time = 0;
+
+	int dfs(int i) {
+		int low = val[i] = ++time, x;
+		z.push_back(i);
+		for (int e : gr[i])
+			if (!comp[e])
+				low = min(low, val[e] ?: dfs(e));
+		if (low == val[i])
+			do {
+				x = z.back();
+				z.pop_back();
+				comp[x] = low;
+				if (values[x >> 1] == -1)
+					values[x >> 1] = x & 1;
+			} while (x != i);
+		return val[i] = low;
+	}
+
+	bool solve() {
+		values.assign(nbSommets, -1);
+		val.assign(2 * nbSommets, 0);
+		comp = val;
+		for (int i = 0; i < 2 * nbSommets; ++i)
+			if (!comp[i])
+				dfs(i);
+		for (int i = 0; i < nbSommets; ++i)
+			if (comp[2 * i] == comp[2 * i + 1])
+				return 0;
+		return 1;
+	}
+};
+endsnippet
+
+snippet Dominator
+struct DominatorTree {
+	int n, sz = 0;
+	vector<int> dfn, pre, pt, semi, dsu, idom, best;
+	// dom[node] = childrens of node in the dominator tree
+	vector<vector<int>> dom;
+
+	DominatorTree(const vector<vector<int>> &g, int source)
+		: n(g.size()), dfn(n, -1), pre(n), pt(n), semi(n), dsu(n), idom(n),
+		best(n), dom(n) {
+			vector<vector<int>> ginv(n);
+			for (int i = 0; i < n; ++i) {
+				for (int j : g[i])
+					ginv[j].push_back(i);
+				dsu[i] = best[i] = semi[i] = i;
+			}
+			dfs(source, g);
+			vector<vector<int>> mydom(n);
+			tarjan(ginv, mydom);
+			for (int i = 0; i < sz; ++i)
+				for (int d : mydom[i])
+					dom[pt[i]].push_back(pt[d]);
+		}
+
+	int get(int x) {
+		if (x == dsu[x])
+			return x;
+		int y = get(dsu[x]);
+		if (semi[best[x]] > semi[best[dsu[x]]])
+			best[x] = best[dsu[x]];
+		return dsu[x] = y;
+	}
+
+	void dfs(int u, const vector<vector<int>> &succ) {
+		dfn[u] = sz;
+		pt[sz++] = u;
+		for (int v : succ[u])
+			if (dfn[v] < 0) {
+				dfs(v, succ);
+				pre[dfn[v]] = dfn[u];
+			}
+	}
+
+	void tarjan(const vector<vector<int>> &pref, vector<vector<int>> &dom) {
+		for (int j = sz - 1; j; --j) {
+			int u = pt[j];
+			for (int tv : pref[u])
+				if (dfn[tv] >= 0) {
+					int v = dfn[tv];
+					get(v);
+					if (semi[best[v]] < semi[j])
+						semi[j] = semi[best[v]];
+				}
+			dom[semi[j]].push_back(j);
+			int x = dsu[j] = pre[j];
+			for (int z : dom[x]) {
+				get(z);
+				if (semi[best[z]] < x)
+					idom[z] = best[z];
+				else
+					idom[z] = x;
+			}
+			dom[x].clear();
+		}
+		for (int i = 1; i < sz; ++i) {
+			if (semi[i] != idom[i])
+				idom[i] = idom[idom[i]];
+			dom[idom[i]].push_back(i);
+		}
+	}
+};
 endsnippet

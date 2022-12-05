@@ -1,79 +1,54 @@
 snippet tempsimple "Template for single test programs"
-// Snippets come from https://github.com/nweeks1/UltiSnips (including template, and some standard algorithms, unless stated otherwise
-
 #include <bits/stdc++.h>
-#define SZ(v) ((int)(v).size())
+#define int long long
 using namespace std;
 
-using ll = long long;
-
-template<typename... Args>void read(Args&... args){	((cin >> args), ...);}
-template<typename T>void read(vector<T> &vec){	for (auto &v : vec) read(v);}
-void write() {}template<typename H, typename... T>void write(const H &h, const T&... t){	cout << h;	if (sizeof...(t)) {cout << ' '; write(t...);}}
-template<typename T>void write(const vector<T> &vec){	if (SZ(vec) == 0) return;	write(vec[0]);	for (int i(1); i < SZ(vec); ++i)	{cout << ' '; write(vec[i]);}}
-template<typename... Args>void writeln(Args... args){	write(args...); cout << '\n';}
-
-int main(void)
-{
-	ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
-
+signed main(void) {
+	ios_base::sync_with_stdio(false); 
+	cin.tie(0);
+	$0
 }
 endsnippet
 
-snippet tempmulti
-// https://github.com/nweeks1/UltiSnips
+snippet tempmulti "Template for single test programs"
 #include <bits/stdc++.h>
-#define SZ(v) ((int)(v).size())
+#define int long long
 using namespace std;
 
-using ll = long long;
-
-template<typename... Args>
-void read(Args&... args)
-{
-	((cin >> args), ...);
-}
-template<typename T>
-void read(vector<T> &vec)
-{
-	for (auto &v : vec) read(v);
-}
-
-void write() {}
-template<typename H, typename... T>
-void write(const H &h, const T&... t)
-{
-	cout << h;
-	if (sizeof...(t)) {cout << ' '; write(t...);}
-}
-
-template<typename T>
-void write(const vector<T> &vec)
-{
-	if (SZ(vec) == 0) return;
-	write(vec[0]);
-	for (int i(1); i < SZ(vec); ++i)
-	{cout << ' '; write(vec[i]);}
-}
-
-template<typename... Args>
-void writeln(Args... args)
-{
-	write(args...); cout << '\n';
-}
-
-void solve()
-{
+void solve() {
 	$0
 }
 
-int main(void)
-{
-	ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+signed main(void) {
+	ios_base::sync_with_stdio(false); 
+	cin.tie(0);
 	
-	int t;
-	read(t);
-	while (t--)
+	int nbTests;
+	cin >> nbTests;
+	for (int iTest(0); iTest < nbTests; ++iTest)
 		solve();
+}
+endsnippet
+
+snippet tempgcj "Template for google codejam"
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+
+void solve() {
+	$0
+}
+
+signed main(void) {
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+	cout.tie(0);
+
+	int nbTests;
+	cin >> nbTests;
+	for (int iTest = 0; iTest < nbTests; ++iTest) {
+		cout << "Case #" << iTest + 1 << ": ";
+		solve();
+	}
 }
 endsnippet

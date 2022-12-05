@@ -1,0 +1,203 @@
+snippet convMod "ntt"
+const int root = 62;
+void ntt(vector<Mint> &a, bool inverse = false) { int n = a.size(), L = 31 - __builtin_clz((int)n);
+	static vector<Mint> rt(2, 1);
+	for (static int k = 2, s = 2; k < n; k *= 2, s++) {
+		rt.resize(n);
+		Mint z[] = {1, Mint(root).fastpow(MOD >> s)};
+		for (int i(k); i < 2 * k; ++i)
+			rt[i] = rt[i / 2] * z[i & 1];
+	}
+	if (inverse)
+		reverse(a.begin() + 1, a.end());
+	vector<int> rev(n);
+	for (int i = 0; i < n; ++i) {
+		rev[i] = (rev[i / 2] | (i & 1) << L) / 2;
+	}
+	for (int i = 0; i < n; ++i) {
+		if (i < rev[i])
+			swap(a[i], a[rev[i]]);
+	}
+	for (int k(1); k < n; k *= 2)
+		for (int i(0); i < n; i += 2 * k)
+			for (int j = 0; j < k; ++j) {
+				Mint z = rt[j + k] * a[i + j + k], &ai = a[i + j];
+				a[i + j + k] = ai - z + (z > ai ? MOD : 0);
+				ai += (ai + z >= MOD ? z - MOD : z);
+			}
+	if (inverse) {
+		Mint invN = Mint(n).inv();
+		for (int i = 0; i < n; ++i)
+			a[i] = a[i] * invN;
+	}
+}
+
+vector<Mint> conv(const vector<Mint> &a, const vector<Mint> &b) {
+	if (a.empty() or b.empty())
+		return {};
+	int s = a.size() + b.size() - 1, B = 32 - __builtin_clz((int)s), n = 1 << B;
+	if (s <= 128) {
+		vector<Mint> ret(s);
+		for (int i = 0; i < (int)a.size(); ++i)
+			for (int j = 0; j < (int)b.size(); ++j)
+				ret[i + j] += a[i] * b[j];
+		return ret;
+	}
+	Mint inverse = Mint(n).inv();
+	vector<Mint> L(a), R(b), out(n);
+	L.resize(n), R.resize(n);
+	ntt(L), ntt(R);
+	for (int i = 0; i < n; ++i) {
+		out[-i & (n - i)] = L[i] * R[i] * inverse;
+	}
+	ntt(out);
+	return {out.begin(), out.begin() + s};
+}
+endsnippet
+
+snippet convdouble "ftt"
+typedef complex<double> C;
+typedef vector<double> vd;
+
+void fft(vector<C> &a) {
+	int n = a.size(), L = 31 - __builtin_clz((unsigned)n);
+	static vector<complex<long double>> R(2, 1);
+	static vector<C> rt(2, 1);
+	for (static int k = 2; k < n; k *= 2) {
+		R.resize(n);
+		rt.resize(n);
+		auto x = polar(1.0L, acos(-1.0L) / k);
+		for (int i(k); i < 2 * k; ++i)
+			rt[i] = R[i] = i & 1 ? R[i / 2] * x : R[i / 2];
+	}
+	vector<int> rev(n);
+	for (int i(0); i < n; ++i)
+		rev[i] = (rev[i / 2] | (i & 1) << L) / 2;
+	for (int i(0); i < n; ++i)
+		if (i < rev[i])
+			swap(a[i], a[rev[i]]);
+	for (int k = 1; k < n; k *= 2)
+		for (int i(0); i < n; i += 2 * k)
+			for (int j = 0; j < k; ++j) {
+				C z = rt[j + k] * a[i + j + k];
+				a[i + j + k] = a[i + j] - z;
+				a[i + j] += z;
+			}
+}
+
+vd conv(const vd &a, const vd &b) {
+	if (a.empty() or b.empty())
+		return {};
+	vd res(a.size() + b.size() - 1);
+	int L = 32 - __builtin_clz(res.size()), n = 1 << L;
+	vector<C> in(n), out(n);
+	copy(a.begin(), a.end(), begin(in));
+	for (int i(0); i < (int)b.size(); ++i)
+		in[i].imag(b[i]);
+	fft(in);
+	for (C &x : in)
+		x *= x;
+	for (int i(0); i < n; ++i)
+		out[i] = in[-i & (n - 1)] - conj(in[i]);
+	fft(out);
+	for (int i(0); i < (int)res.size(); ++i)
+		res[i] = imag(out[i]) / (4 * n);
+	return res;
+}
+endsnippet
+
+snippet InverseFPS
+vector<Mint> inversePowerSeries(vector<Mint> p, int n) {
+	vector<Mint> inv(1, p[0].inv());
+	for (int curSz = 2; curSz < 2 * n; curSz *= 2) {
+		vector<Mint> cur(2 * curSz);
+		for (int i = 0; i < curSz; ++i)
+			cur[i] = i < (int)p.size() ? p[i] : 0;
+		inv.resize(2 * curSz);
+		ntt(inv), ntt(cur);
+		Mint invSz = Mint(2 * curSz).inv();
+		for (int i = 0; i < 2 * curSz; ++i)
+			inv[i] = inv[i] * (2 - cur[i] * inv[i]) * invSz;
+		reverse(inv.begin() + 1, inv.begin() + 2 * curSz);
+		ntt(inv);
+		fill(inv.begin() + curSz, inv.begin() + 2 * curSz, 0);
+	}
+	return {inv.begin(), inv.begin() + n};
+}
+endsnippet
+
+snippet EuclidFPS
+pair<vector<Mint>, vector<Mint>> euclidFPS(vector<Mint> A, vector<Mint> B) {
+	while (!B.empty() and B.back().x == 0)
+		B.pop_back();
+	int n = A.size();
+	int m = B.size();
+	if (n < m)
+		return pair(vector<Mint>{}, A);
+	reverse(A.begin(), A.end());
+	reverse(B.begin(), B.end());
+	auto invB = inversePowerSeries(B, n - m + 1);
+	auto quotient = conv(A, invB);
+	quotient.resize(n - m + 1);
+	reverse(quotient.begin(), quotient.end());
+	while (!quotient.empty() and quotient.back().x == 0)
+		quotient.pop_back();
+	reverse(A.begin(), A.end());
+	reverse(B.begin(), B.end());
+	auto R = conv(B, quotient);
+	for (int i = 0; i < (int)R.size(); ++i)
+		A[i] -= R[i];
+	while (!A.empty() and A.back().x == 0)
+		A.pop_back();
+	return pair(quotient, A);
+}
+endsnippet
+
+snippet MultiPoint
+vector<Mint> mulT(vector<Mint> &a, vector<Mint> b) {
+	if (b.empty())
+		return {};
+	int n = b.size();
+	reverse(b.begin(), b.end());
+	auto prd = conv(a, b);
+	if ((int)prd.size() < n)
+		return {};
+	return vector<Mint>{prd.begin() + n - 1, prd.end()};
+}
+vector<Mint> multiPoint(vector<Mint> pol, vector<Mint> pts) {
+	if (pts.empty())
+		return {};
+	int n = max(pol.size(), pts.size());
+	vector<vector<Mint>> seg(4 * n);
+	vector<Mint> sol(pts.size());
+	pts.resize(n);
+	auto build = [&](auto rec, int node, int deb, int fin) -> void {
+		if (deb + 1 == fin) {
+			seg[node] = {1, -pts[deb]};
+		} else {
+			int mid = (deb + fin) / 2;
+			rec(rec, 2 * node, deb, mid);
+			rec(rec, 2 * node + 1, mid, fin);
+			seg[node] = conv(seg[2 * node], seg[2 * node + 1]);
+		}
+	};
+	build(build, 1, 0, n);
+	auto trav = [&](auto rec, int node, int deb, int fin,
+			vector<Mint> cur) -> void {
+		if (deb + 1 == fin) {
+			if (deb < (int)sol.size())
+				sol[deb] = cur[0];
+			return;
+		}
+		int mid = (deb + fin) / 2;
+		vector<Mint> lft = mulT(cur, seg[2 * node + 1]);
+		lft.resize(min((int)lft.size(), mid - deb));
+		rec(rec, 2 * node, deb, mid, move(lft));
+		vector<Mint> rgt = mulT(cur, seg[2 * node]);
+		rgt.resize(min((int)rgt.size(), fin - mid));
+		rec(rec, 2 * node + 1, mid, fin, move(rgt));
+	};
+	trav(trav, 1, 0, n, mulT(pol, inversePowerSeries(seg[1], n)));
+	return sol;
+}
+endsnippet

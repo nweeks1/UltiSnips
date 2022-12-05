@@ -19,13 +19,15 @@ vector<int> sieve()
 endsnippet
 
 snippet Fastpow "fastpow"
-// https://github.com/nweeks1/UltiSnips
-ll fastpow(ll a, ll b, ll mod)
-{
-	if (!b) return 1;
-	ll ret = fastpow(a, b/2, mod);
-	return b%2 ? a * ret % mod * ret %mod : ret * ret % mod;
+int fastpow(int a, int b) {
+	int ret = 1;
+	for (; b; b /= 2, a = a * a % MOD)
+		if (b % 2)
+			ret = ret * a % MOD;
+	return ret;
 }
+
+int inv(int x) { return fastpow(x, MOD - 2); }
 endsnippet
 
 snippet ContFraction "continued fractions for sqrt"
@@ -142,8 +144,8 @@ snippet Factor
 // https://github.com/nweeks1/UltiSnips
 using ull = unsigned long long;
 ull modmul(ull a, ull b, ull M) {
-	ll ret = a * b - M * ull(1.L / M * a * b);
-	return ret + M * (ret < 0) - M * (ret >= (ll)M);
+	int ret = a * b - M * ull(1.L / M * a * b);
+	return ret + M * (ret < 0) - M * (ret >= (int)M);
 }
 ull modpow(ull b, ull e, ull mod) {
 	ull ans = 1;
@@ -186,7 +188,7 @@ vector<ull> factor(ull n)
 {
 	if (n == 1) return {};
 	if (isPrime(n)) return {n};
-	ll x = pollard(n);
+	int x = pollard(n);
 	auto l = factor(x), r = factor(n/x);
 	l.insert(l.end(), r.begin(), r.end());
 	return l;
@@ -207,7 +209,7 @@ constexpr int primitive_root(int m)
 	int cnt = 1;
 	int x = (m - 1) / 2;
 	while (x % 2 == 0) x /= 2;
-	for (int i = 3; (ll)(i)*i <= x; i += 2)
+	for (int i = 3; (int)(i)*i <= x; i += 2)
 	{
 		if (x % i == 0) 
 		{
