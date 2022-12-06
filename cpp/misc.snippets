@@ -265,3 +265,21 @@ int readInt() {
 	return a - 48;
 }
 endsnippet
+
+snippet TernarySearch
+// Minimize F over a, b given that f is bitonic. Replace > by <
+template <class F> int ternSearch(int a, int b, F f) {
+	assert(a <= b);
+	while (b - a >= 5) {
+		int mid = (a + b) / 2;
+		if (f(mid) > f(mid + 1))
+			a = mid;
+		else
+			b = mid + 1;
+	}
+	for (int i = a + 1; i < b + 1; ++i)
+		if (f(a) > f(i))
+			a = i;
+	return a;
+}
+endsnippet
